@@ -34,8 +34,18 @@ class RustEvaluatorVisitor
   }
 
   visitProg(ctx: ProgContext): ValueType {
-    ctx.stmt().forEach((stmt) => this.visit(stmt));
-    return this.defaultResult();
+    const statements = ctx.stmt();
+    if (statements.length === 0) {
+      return this.defaultResult(); // Return default if no statements
+    }
+
+    // Execute all statements and keep the last result
+    let lastResult: ValueType = this.defaultResult();
+    for (const stmt of statements) {
+      lastResult = this.visit(stmt);
+    }
+
+    return lastResult;
   }
 
   visitLet_decl(ctx: Let_declContext): ValueType {
