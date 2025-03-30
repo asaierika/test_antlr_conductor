@@ -10,7 +10,6 @@ import { Expr_stmtContext } from "./RustParser.js";
 import { If_stmtContext } from "./RustParser.js";
 import { BlockContext } from "./RustParser.js";
 import { VariableContext } from "./RustParser.js";
-import { ComparisonContext } from "./RustParser.js";
 import { ParensContext } from "./RustParser.js";
 import { LiteralContext } from "./RustParser.js";
 import { BinaryOpContext } from "./RustParser.js";
@@ -68,13 +67,6 @@ export class RustVisitor<Result> extends AbstractParseTreeVisitor<Result> {
      * @return the visitor result
      */
     visitVariable?: (ctx: VariableContext) => Result;
-    /**
-     * Visit a parse tree produced by the `Comparison`
-     * labeled alternative in `RustParser.expr`.
-     * @param ctx the parse tree
-     * @return the visitor result
-     */
-    visitComparison?: (ctx: ComparisonContext) => Result;
     /**
      * Visit a parse tree produced by the `Parens`
      * labeled alternative in `RustParser.expr`.

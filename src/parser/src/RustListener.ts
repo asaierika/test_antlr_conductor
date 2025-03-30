@@ -10,7 +10,6 @@ import { Expr_stmtContext } from "./RustParser.js";
 import { If_stmtContext } from "./RustParser.js";
 import { BlockContext } from "./RustParser.js";
 import { VariableContext } from "./RustParser.js";
-import { ComparisonContext } from "./RustParser.js";
 import { ParensContext } from "./RustParser.js";
 import { LiteralContext } from "./RustParser.js";
 import { BinaryOpContext } from "./RustParser.js";
@@ -94,18 +93,6 @@ export class RustListener implements ParseTreeListener {
      * @param ctx the parse tree
      */
     exitVariable?: (ctx: VariableContext) => void;
-    /**
-     * Enter a parse tree produced by the `Comparison`
-     * labeled alternative in `RustParser.expr`.
-     * @param ctx the parse tree
-     */
-    enterComparison?: (ctx: ComparisonContext) => void;
-    /**
-     * Exit a parse tree produced by the `Comparison`
-     * labeled alternative in `RustParser.expr`.
-     * @param ctx the parse tree
-     */
-    exitComparison?: (ctx: ComparisonContext) => void;
     /**
      * Enter a parse tree produced by the `Parens`
      * labeled alternative in `RustParser.expr`.

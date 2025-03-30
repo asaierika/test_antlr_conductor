@@ -16,7 +16,7 @@ block: '{' stmt* '}';
 
 expr: expr op=('*' | '/' | '%') expr   # BinaryOp
     | expr op=('+' | '-') expr         # BinaryOp
-    | expr op=('==' | '!=' | '<' | '>') expr  # Comparison
+    | expr op=('==' | '!=' | '<' | '>') expr  # BinaryOp
     | ID                               # Variable
     | INT                              # Literal
     | '(' expr ')'                     # Parens

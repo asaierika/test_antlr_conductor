@@ -447,17 +447,17 @@ export class RustParser extends antlr.Parser {
                         break;
                     case 3:
                         {
-                        localContext = new ComparisonContext(new ExprContext(parentContext, parentState));
+                        localContext = new BinaryOpContext(new ExprContext(parentContext, parentState));
                         this.pushNewRecursionContext(localContext, _startState, RustParser.RULE_expr);
                         this.state = 76;
                         if (!(this.precpred(this.context, 4))) {
                             throw this.createFailedPredicateException("this.precpred(this.context, 4)");
                         }
                         this.state = 77;
-                        (localContext as ComparisonContext)._op = this.tokenStream.LT(1);
+                        (localContext as BinaryOpContext)._op = this.tokenStream.LT(1);
                         _la = this.tokenStream.LA(1);
                         if(!((((_la) & ~0x1F) === 0 && ((1 << _la) & 245760) !== 0))) {
-                            (localContext as ComparisonContext)._op = this.errorHandler.recoverInline(this);
+                            (localContext as BinaryOpContext)._op = this.errorHandler.recoverInline(this);
                         }
                         else {
                             this.errorHandler.reportMatch(this);
@@ -844,39 +844,6 @@ export class VariableContext extends ExprContext {
     public override accept<Result>(visitor: RustVisitor<Result>): Result | null {
         if (visitor.visitVariable) {
             return visitor.visitVariable(this);
-        } else {
-            return visitor.visitChildren(this);
-        }
-    }
-}
-export class ComparisonContext extends ExprContext {
-    public _op?: Token | null;
-    public constructor(ctx: ExprContext) {
-        super(ctx.parent, ctx.invokingState);
-        super.copyFrom(ctx);
-    }
-    public expr(): ExprContext[];
-    public expr(i: number): ExprContext | null;
-    public expr(i?: number): ExprContext[] | ExprContext | null {
-        if (i === undefined) {
-            return this.getRuleContexts(ExprContext);
-        }
-
-        return this.getRuleContext(i, ExprContext);
-    }
-    public override enterRule(listener: RustListener): void {
-        if(listener.enterComparison) {
-             listener.enterComparison(this);
-        }
-    }
-    public override exitRule(listener: RustListener): void {
-        if(listener.exitComparison) {
-             listener.exitComparison(this);
-        }
-    }
-    public override accept<Result>(visitor: RustVisitor<Result>): Result | null {
-        if (visitor.visitComparison) {
-            return visitor.visitComparison(this);
         } else {
             return visitor.visitChildren(this);
         }
