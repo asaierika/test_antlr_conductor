@@ -56,7 +56,7 @@ export class RustCompiler {
   }
 
   compile(comp: any, ce: any): void {
-    console.log(comp.tag);
+    //console.log(comp.tag);
     this.compile_comp[comp.tag](comp, ce);
   }
 
@@ -200,6 +200,12 @@ export class RustCompiler {
         },
         ce
       );
+    },
+    break: (comp, ce) => {
+      // not implemented yet
+    },
+    continue: (comp, ce) => {
+      // not implemented yet
     },
   };
 }

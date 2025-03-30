@@ -7,13 +7,22 @@ import {
   BlockContext,
   BinaryOpContext,
   VariableContext,
-  LiteralContext,
+  IntLiteralContext,
+  BoolLiteralContext,
+  FloatLiteralContext,
+  UnaryOpContext,
+  While_loopContext,
+  Break_stmtContext,
+  Continue_stmtContext,
+  Assign_stmtContext,
 } from "./parser/src/RustParser";
 
 export class ASTToJsonVisitor
   extends AbstractParseTreeVisitor<any>
   implements RustVisitor<any>
 {
+  private inLoop = false; // Track if we're inside a loop
+
   visitProg(ctx: ProgContext): any {
     // Create a synthetic BlockContext to reuse visitBlock logic
     const syntheticBlock = {
@@ -25,6 +34,51 @@ export class ASTToJsonVisitor
     return this.visitBlock(syntheticBlock);
   }
 
+  visitBinaryOp(ctx: BinaryOpContext): any {
+    return {
+      tag: "binop",
+      sym: ctx._op.text,
+      first: this.visit(ctx.expr(0)),
+      second: this.visit(ctx.expr(1)),
+    };
+  }
+
+  visitUnaryOp(ctx: UnaryOpContext): any {
+    return {
+      tag: "unop",
+      sym: ctx._op.text,
+      first: this.visit(ctx.expr()),
+    };
+  }
+
+  visitIntLiteral(ctx: IntLiteralContext): any {
+    return {
+      tag: "lit",
+      val: parseInt(ctx.INT().getText()),
+    };
+  }
+
+  visitBoolLiteral(ctx: BoolLiteralContext): any {
+    return {
+      tag: "lit",
+      val: ctx.TRUE() ? true : false,
+    };
+  }
+
+  visitFloatLiteral(ctx: FloatLiteralContext): any {
+    return {
+      tag: "lit",
+      val: parseFloat(ctx.FLOAT().getText()),
+    };
+  }
+
+  visitVariable(ctx: VariableContext): any {
+    return {
+      tag: "nam",
+      sym: ctx.ID().getText(),
+    };
+  }
+
   visitLet_decl(ctx: Let_declContext): any {
     return {
       tag: "let",
@@ -34,26 +88,11 @@ export class ASTToJsonVisitor
     };
   }
 
-  visitBinaryOp(ctx: BinaryOpContext): any {
+  visitAssign_stmt(ctx: Assign_stmtContext): any {
     return {
-      tag: "binop",
-      operator: ctx._op.text,
-      left: this.visit(ctx.expr(0)),
-      right: this.visit(ctx.expr(1)),
-    };
-  }
-
-  visitVariable(ctx: VariableContext): any {
-    return {
-      tag: "nam",
-      name: ctx.ID().getText(),
-    };
-  }
-
-  visitLiteral(ctx: LiteralContext): any {
-    return {
-      tag: "lit",
-      val: parseInt(ctx.INT().getText()),
+      tag: "assmt",
+      sym: ctx.ID().getText(),
+      expr: this.visit(ctx.expr()),
     };
   }
 
@@ -74,8 +113,34 @@ export class ASTToJsonVisitor
       tag: "blk",
       body:
         ctx.stmt().length == 1
-          ? ctx.stmt()
+          ? this.visit(ctx.stmt()[0])
           : { tag: "seq", stmts: ctx.stmt().map((stmt) => this.visit(stmt)) },
     };
+  }
+
+  visitWhile_loop(ctx: While_loopContext): any {
+    const prevInLoop = this.inLoop;
+    this.inLoop = true;
+    const result = {
+      tag: "while",
+      pred: this.visit(ctx.expr()),
+      body: this.visit(ctx.block()),
+    };
+    this.inLoop = prevInLoop;
+    return result;
+  }
+
+  visitBreak_stmt(ctx: Break_stmtContext): any {
+    if (!this.inLoop) {
+      throw new Error("Break statement outside of loop");
+    }
+    return { tag: "break" };
+  }
+
+  visitContinue_stmt(ctx: Continue_stmtContext): any {
+    if (!this.inLoop) {
+      throw new Error("Continue statement outside of loop");
+    }
+    return { tag: "continue" };
   }
 }

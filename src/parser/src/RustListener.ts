@@ -6,12 +6,19 @@ import { ErrorNode, ParseTreeListener, ParserRuleContext, TerminalNode } from "a
 import { ProgContext } from "./RustParser.js";
 import { StmtContext } from "./RustParser.js";
 import { Let_declContext } from "./RustParser.js";
+import { Assign_stmtContext } from "./RustParser.js";
 import { Expr_stmtContext } from "./RustParser.js";
 import { If_stmtContext } from "./RustParser.js";
+import { While_loopContext } from "./RustParser.js";
+import { Break_stmtContext } from "./RustParser.js";
+import { Continue_stmtContext } from "./RustParser.js";
 import { BlockContext } from "./RustParser.js";
+import { UnaryOpContext } from "./RustParser.js";
 import { VariableContext } from "./RustParser.js";
+import { BoolLiteralContext } from "./RustParser.js";
+import { FloatLiteralContext } from "./RustParser.js";
 import { ParensContext } from "./RustParser.js";
-import { LiteralContext } from "./RustParser.js";
+import { IntLiteralContext } from "./RustParser.js";
 import { BinaryOpContext } from "./RustParser.js";
 import { TypeContext } from "./RustParser.js";
 
@@ -52,6 +59,16 @@ export class RustListener implements ParseTreeListener {
      */
     exitLet_decl?: (ctx: Let_declContext) => void;
     /**
+     * Enter a parse tree produced by `RustParser.assign_stmt`.
+     * @param ctx the parse tree
+     */
+    enterAssign_stmt?: (ctx: Assign_stmtContext) => void;
+    /**
+     * Exit a parse tree produced by `RustParser.assign_stmt`.
+     * @param ctx the parse tree
+     */
+    exitAssign_stmt?: (ctx: Assign_stmtContext) => void;
+    /**
      * Enter a parse tree produced by `RustParser.expr_stmt`.
      * @param ctx the parse tree
      */
@@ -72,6 +89,36 @@ export class RustListener implements ParseTreeListener {
      */
     exitIf_stmt?: (ctx: If_stmtContext) => void;
     /**
+     * Enter a parse tree produced by `RustParser.while_loop`.
+     * @param ctx the parse tree
+     */
+    enterWhile_loop?: (ctx: While_loopContext) => void;
+    /**
+     * Exit a parse tree produced by `RustParser.while_loop`.
+     * @param ctx the parse tree
+     */
+    exitWhile_loop?: (ctx: While_loopContext) => void;
+    /**
+     * Enter a parse tree produced by `RustParser.break_stmt`.
+     * @param ctx the parse tree
+     */
+    enterBreak_stmt?: (ctx: Break_stmtContext) => void;
+    /**
+     * Exit a parse tree produced by `RustParser.break_stmt`.
+     * @param ctx the parse tree
+     */
+    exitBreak_stmt?: (ctx: Break_stmtContext) => void;
+    /**
+     * Enter a parse tree produced by `RustParser.continue_stmt`.
+     * @param ctx the parse tree
+     */
+    enterContinue_stmt?: (ctx: Continue_stmtContext) => void;
+    /**
+     * Exit a parse tree produced by `RustParser.continue_stmt`.
+     * @param ctx the parse tree
+     */
+    exitContinue_stmt?: (ctx: Continue_stmtContext) => void;
+    /**
      * Enter a parse tree produced by `RustParser.block`.
      * @param ctx the parse tree
      */
@@ -81,6 +128,18 @@ export class RustListener implements ParseTreeListener {
      * @param ctx the parse tree
      */
     exitBlock?: (ctx: BlockContext) => void;
+    /**
+     * Enter a parse tree produced by the `UnaryOp`
+     * labeled alternative in `RustParser.expr`.
+     * @param ctx the parse tree
+     */
+    enterUnaryOp?: (ctx: UnaryOpContext) => void;
+    /**
+     * Exit a parse tree produced by the `UnaryOp`
+     * labeled alternative in `RustParser.expr`.
+     * @param ctx the parse tree
+     */
+    exitUnaryOp?: (ctx: UnaryOpContext) => void;
     /**
      * Enter a parse tree produced by the `Variable`
      * labeled alternative in `RustParser.expr`.
@@ -94,6 +153,30 @@ export class RustListener implements ParseTreeListener {
      */
     exitVariable?: (ctx: VariableContext) => void;
     /**
+     * Enter a parse tree produced by the `BoolLiteral`
+     * labeled alternative in `RustParser.expr`.
+     * @param ctx the parse tree
+     */
+    enterBoolLiteral?: (ctx: BoolLiteralContext) => void;
+    /**
+     * Exit a parse tree produced by the `BoolLiteral`
+     * labeled alternative in `RustParser.expr`.
+     * @param ctx the parse tree
+     */
+    exitBoolLiteral?: (ctx: BoolLiteralContext) => void;
+    /**
+     * Enter a parse tree produced by the `FloatLiteral`
+     * labeled alternative in `RustParser.expr`.
+     * @param ctx the parse tree
+     */
+    enterFloatLiteral?: (ctx: FloatLiteralContext) => void;
+    /**
+     * Exit a parse tree produced by the `FloatLiteral`
+     * labeled alternative in `RustParser.expr`.
+     * @param ctx the parse tree
+     */
+    exitFloatLiteral?: (ctx: FloatLiteralContext) => void;
+    /**
      * Enter a parse tree produced by the `Parens`
      * labeled alternative in `RustParser.expr`.
      * @param ctx the parse tree
@@ -106,17 +189,17 @@ export class RustListener implements ParseTreeListener {
      */
     exitParens?: (ctx: ParensContext) => void;
     /**
-     * Enter a parse tree produced by the `Literal`
+     * Enter a parse tree produced by the `IntLiteral`
      * labeled alternative in `RustParser.expr`.
      * @param ctx the parse tree
      */
-    enterLiteral?: (ctx: LiteralContext) => void;
+    enterIntLiteral?: (ctx: IntLiteralContext) => void;
     /**
-     * Exit a parse tree produced by the `Literal`
+     * Exit a parse tree produced by the `IntLiteral`
      * labeled alternative in `RustParser.expr`.
      * @param ctx the parse tree
      */
-    exitLiteral?: (ctx: LiteralContext) => void;
+    exitIntLiteral?: (ctx: IntLiteralContext) => void;
     /**
      * Enter a parse tree produced by the `BinaryOp`
      * labeled alternative in `RustParser.expr`.
