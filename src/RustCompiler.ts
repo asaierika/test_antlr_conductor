@@ -61,7 +61,7 @@ export class RustCompiler {
   }
 
   compile(comp: any, ce: any): void {
-    console.log(comp.tag);
+    // console.log(comp.tag);
     this.compile_comp[comp.tag](comp, ce);
   }
 
@@ -226,7 +226,13 @@ export class RustCompiler {
         {
           tag: "const",
           sym: comp.sym,
-          expr: { tag: "lam", prms: comp.prms, body: comp.body },
+          expr: {
+            tag: "lam",
+            prms: comp.prms.map((prm) => prm.name),
+            prms_type: comp.prms.map((prm) => prm.type),
+            ret_type: comp.type,
+            body: comp.body,
+          },
         },
         ce
       );

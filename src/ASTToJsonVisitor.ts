@@ -15,7 +15,16 @@ import {
   Break_stmtContext,
   Continue_stmtContext,
   Assign_stmtContext,
+  Func_defContext,
+  ParamContext,
+  ParamsContext,
+  Return_stmtContext,
 } from "./parser/src/RustParser";
+
+interface FunctionParameter {
+  name: string;
+  type: string; // 'i32' | 'bool' | 'f64'
+}
 
 export class ASTToJsonVisitor
   extends AbstractParseTreeVisitor<any>
@@ -24,7 +33,6 @@ export class ASTToJsonVisitor
   private inLoop = false; // Track if we're inside a loop
 
   visitProg(ctx: ProgContext): any {
-    console.log("visit prog stmt length: " + ctx.stmt().length);
     // Create a synthetic BlockContext to reuse visitBlock logic
     const syntheticBlock = {
       stmt: () => ctx.stmt(), // Expose the same statements
@@ -53,7 +61,6 @@ export class ASTToJsonVisitor
   }
 
   visitIntLiteral(ctx: IntLiteralContext): any {
-    console.log("visit lit");
     return {
       tag: "lit",
       val: parseInt(ctx.INT().getText()),
@@ -108,7 +115,6 @@ export class ASTToJsonVisitor
   }
 
   visitBlock(ctx: BlockContext): any {
-    console.log("visit blk stmt length: " + ctx.stmt().length);
     if (ctx.stmt().length == 0) {
       return {};
     }
@@ -145,5 +151,33 @@ export class ASTToJsonVisitor
       throw new Error("Continue statement outside of loop");
     }
     return { tag: "continue" };
+  }
+
+  visitFunc_def(ctx: Func_defContext): any {
+    return {
+      tag: "fun",
+      sym: ctx.ID().getText(),
+      prms: ctx.params() ? this.visitParams(ctx.params()) : [],
+      body: this.visit(ctx.block()),
+      ret_type: ctx.type().getText(),
+    };
+  }
+
+  visitParams(ctx: ParamsContext): FunctionParameter[] {
+    return ctx.param().map((paramCtx) => this.visitParam(paramCtx));
+  }
+
+  visitParam(ctx: ParamContext): FunctionParameter {
+    return {
+      name: ctx.ID().getText(),
+      type: ctx.type().getText(),
+    };
+  }
+
+  visitReturn_stmt(ctx: Return_stmtContext): any {
+    return {
+      tag: "ret",
+      expr: this.visit(ctx.expr()),
+    };
   }
 }
