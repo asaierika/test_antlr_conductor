@@ -1,3 +1,5 @@
+type Goto_instruction = { tag: string; addr: number };
+
 export class RustCompiler {
   private wc: number = 0;
   private instrs: any[] = [];
@@ -5,7 +7,10 @@ export class RustCompiler {
   private primitive_object = {};
   global_compile_frame = Object.keys(this.primitive_object);
   global_compile_environment = [this.global_compile_frame];
-
+  while_instrs: number[] = [];
+  break_map: Map<number, Goto_instruction[]> = new Map(); // maps the current while loop start addr to the break instructions inside
+  continue_map: Map<number, Goto_instruction[]> = new Map(); // maps the current while loop start addr to the continue instructions inside
+  blk_map: Map<number, number> = new Map(); // maps the current while loop start addr to the number of blocks until the break/continue
   compile_time_environment_position = (env, x) => {
     let frame_index = env.length;
     while (this.value_index(env[--frame_index], x) === -1) {}
@@ -56,7 +61,7 @@ export class RustCompiler {
   }
 
   compile(comp: any, ce: any): void {
-    //console.log(comp.tag);
+    console.log(comp.tag);
     this.compile_comp[comp.tag](comp, ce);
   }
 
@@ -113,6 +118,8 @@ export class RustCompiler {
       goto_instruction.addr = this.wc;
     },
     while: (comp, ce) => {
+      this.blk_map.set(this.wc, 0);
+      this.while_instrs.push(this.wc);
       const loop_start = this.wc;
       this.compile(comp.pred, ce);
       const jump_on_false_instruction = { tag: "JOF", addr: undefined };
@@ -122,6 +129,27 @@ export class RustCompiler {
       this.instrs[this.wc++] = { tag: "GOTO", addr: loop_start };
       jump_on_false_instruction.addr = this.wc;
       this.instrs[this.wc++] = { tag: "LDC", val: undefined };
+
+      // assigns goto addr to the breaks in the current while loop
+      if (this.break_map.has(loop_start)) {
+        const breaks = this.break_map.get(loop_start);
+        breaks.forEach((goto, index) => {
+          goto.addr = jump_on_false_instruction.addr;
+        });
+        this.break_map.delete(loop_start);
+      }
+
+      // assigns goto addr to the continues in the current while loop
+      if (this.continue_map.has(loop_start)) {
+        const continues = this.continue_map.get(loop_start);
+        continues.forEach((goto, index) => {
+          goto.addr = loop_start;
+        });
+        this.continue_map.delete(loop_start);
+      }
+
+      this.while_instrs.pop();
+      this.blk_map.delete(this.wc);
     },
     app: (comp, ce) => {
       this.compile(comp.fun, ce);
@@ -159,14 +187,16 @@ export class RustCompiler {
     },
     seq: (comp, ce) => this.compile_sequence(comp.stmts, ce),
     blk: (comp, ce) => {
+      for (const key of this.blk_map.keys()) {
+        this.blk_map.set(key, this.blk_map.get(key) + 1);
+      }
       const locals = this.scan(comp.body);
       this.instrs[this.wc++] = { tag: "ENTER_SCOPE", num: locals.length };
-      this.compile(
-        comp.body,
-        // extend this.compile-time environment
-        this.compile_time_environment_extend(locals, ce)
-      );
+      this.compile(comp.body, this.compile_time_environment_extend(locals, ce));
       this.instrs[this.wc++] = { tag: "EXIT_SCOPE" };
+      for (const key of this.blk_map.keys()) {
+        this.blk_map.set(key, this.blk_map.get(key) - 1);
+      }
     },
     let: (comp, ce) => {
       this.compile(comp.expr, ce);
@@ -202,10 +232,38 @@ export class RustCompiler {
       );
     },
     break: (comp, ce) => {
-      // not implemented yet
+      const goto_instruction = { tag: "GOTO", addr: undefined };
+      const curr_wihle = this.while_instrs[this.while_instrs.length - 1];
+      if (!this.break_map.has(curr_wihle)) {
+        this.break_map.set(curr_wihle, [goto_instruction]);
+      } else {
+        this.break_map.get(curr_wihle).push(goto_instruction);
+      }
+      const no_blocks = this.blk_map.get(
+        this.while_instrs[this.while_instrs.length - 1]
+      );
+      for (let i = 0; i < no_blocks; i++) {
+        this.instrs[this.wc++] = { tag: "EXIT_SCOPE" };
+      }
+      this.instrs[this.wc++] = { tag: "POP" };
+      this.instrs[this.wc++] = goto_instruction;
     },
     continue: (comp, ce) => {
-      // not implemented yet
+      const goto_instruction = { tag: "GOTO", addr: undefined };
+      const curr_wihle = this.while_instrs[this.while_instrs.length - 1];
+      if (!this.continue_map.has(curr_wihle)) {
+        this.continue_map.set(curr_wihle, [goto_instruction]);
+      } else {
+        this.continue_map.get(curr_wihle).push(goto_instruction);
+      }
+      const no_blocks = this.blk_map.get(
+        this.while_instrs[this.while_instrs.length - 1]
+      );
+      for (let i = 0; i < no_blocks; i++) {
+        this.instrs[this.wc++] = { tag: "EXIT_SCOPE" };
+      }
+      this.instrs[this.wc++] = { tag: "POP" };
+      this.instrs[this.wc++] = goto_instruction;
     },
   };
 }

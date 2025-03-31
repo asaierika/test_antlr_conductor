@@ -24,6 +24,7 @@ export class ASTToJsonVisitor
   private inLoop = false; // Track if we're inside a loop
 
   visitProg(ctx: ProgContext): any {
+    console.log("visit prog stmt length: " + ctx.stmt().length);
     // Create a synthetic BlockContext to reuse visitBlock logic
     const syntheticBlock = {
       stmt: () => ctx.stmt(), // Expose the same statements
@@ -52,6 +53,7 @@ export class ASTToJsonVisitor
   }
 
   visitIntLiteral(ctx: IntLiteralContext): any {
+    console.log("visit lit");
     return {
       tag: "lit",
       val: parseInt(ctx.INT().getText()),
@@ -106,6 +108,7 @@ export class ASTToJsonVisitor
   }
 
   visitBlock(ctx: BlockContext): any {
+    console.log("visit blk stmt length: " + ctx.stmt().length);
     if (ctx.stmt().length == 0) {
       return {};
     }
