@@ -12,14 +12,20 @@ import { If_stmtContext } from "./RustParser.js";
 import { While_loopContext } from "./RustParser.js";
 import { Break_stmtContext } from "./RustParser.js";
 import { Continue_stmtContext } from "./RustParser.js";
+import { Return_stmtContext } from "./RustParser.js";
 import { BlockContext } from "./RustParser.js";
+import { Func_defContext } from "./RustParser.js";
+import { ParamsContext } from "./RustParser.js";
+import { ParamContext } from "./RustParser.js";
 import { UnaryOpContext } from "./RustParser.js";
 import { VariableContext } from "./RustParser.js";
 import { BoolLiteralContext } from "./RustParser.js";
 import { FloatLiteralContext } from "./RustParser.js";
 import { ParensContext } from "./RustParser.js";
 import { IntLiteralContext } from "./RustParser.js";
+import { FunctionCallContext } from "./RustParser.js";
 import { BinaryOpContext } from "./RustParser.js";
+import { ArgsContext } from "./RustParser.js";
 import { TypeContext } from "./RustParser.js";
 
 
@@ -86,11 +92,35 @@ export class RustVisitor<Result> extends AbstractParseTreeVisitor<Result> {
      */
     visitContinue_stmt?: (ctx: Continue_stmtContext) => Result;
     /**
+     * Visit a parse tree produced by `RustParser.return_stmt`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitReturn_stmt?: (ctx: Return_stmtContext) => Result;
+    /**
      * Visit a parse tree produced by `RustParser.block`.
      * @param ctx the parse tree
      * @return the visitor result
      */
     visitBlock?: (ctx: BlockContext) => Result;
+    /**
+     * Visit a parse tree produced by `RustParser.func_def`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitFunc_def?: (ctx: Func_defContext) => Result;
+    /**
+     * Visit a parse tree produced by `RustParser.params`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitParams?: (ctx: ParamsContext) => Result;
+    /**
+     * Visit a parse tree produced by `RustParser.param`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitParam?: (ctx: ParamContext) => Result;
     /**
      * Visit a parse tree produced by the `UnaryOp`
      * labeled alternative in `RustParser.expr`.
@@ -134,12 +164,25 @@ export class RustVisitor<Result> extends AbstractParseTreeVisitor<Result> {
      */
     visitIntLiteral?: (ctx: IntLiteralContext) => Result;
     /**
+     * Visit a parse tree produced by the `FunctionCall`
+     * labeled alternative in `RustParser.expr`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitFunctionCall?: (ctx: FunctionCallContext) => Result;
+    /**
      * Visit a parse tree produced by the `BinaryOp`
      * labeled alternative in `RustParser.expr`.
      * @param ctx the parse tree
      * @return the visitor result
      */
     visitBinaryOp?: (ctx: BinaryOpContext) => Result;
+    /**
+     * Visit a parse tree produced by `RustParser.args`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitArgs?: (ctx: ArgsContext) => Result;
     /**
      * Visit a parse tree produced by `RustParser.type`.
      * @param ctx the parse tree

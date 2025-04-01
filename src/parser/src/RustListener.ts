@@ -12,14 +12,20 @@ import { If_stmtContext } from "./RustParser.js";
 import { While_loopContext } from "./RustParser.js";
 import { Break_stmtContext } from "./RustParser.js";
 import { Continue_stmtContext } from "./RustParser.js";
+import { Return_stmtContext } from "./RustParser.js";
 import { BlockContext } from "./RustParser.js";
+import { Func_defContext } from "./RustParser.js";
+import { ParamsContext } from "./RustParser.js";
+import { ParamContext } from "./RustParser.js";
 import { UnaryOpContext } from "./RustParser.js";
 import { VariableContext } from "./RustParser.js";
 import { BoolLiteralContext } from "./RustParser.js";
 import { FloatLiteralContext } from "./RustParser.js";
 import { ParensContext } from "./RustParser.js";
 import { IntLiteralContext } from "./RustParser.js";
+import { FunctionCallContext } from "./RustParser.js";
 import { BinaryOpContext } from "./RustParser.js";
+import { ArgsContext } from "./RustParser.js";
 import { TypeContext } from "./RustParser.js";
 
 
@@ -119,6 +125,16 @@ export class RustListener implements ParseTreeListener {
      */
     exitContinue_stmt?: (ctx: Continue_stmtContext) => void;
     /**
+     * Enter a parse tree produced by `RustParser.return_stmt`.
+     * @param ctx the parse tree
+     */
+    enterReturn_stmt?: (ctx: Return_stmtContext) => void;
+    /**
+     * Exit a parse tree produced by `RustParser.return_stmt`.
+     * @param ctx the parse tree
+     */
+    exitReturn_stmt?: (ctx: Return_stmtContext) => void;
+    /**
      * Enter a parse tree produced by `RustParser.block`.
      * @param ctx the parse tree
      */
@@ -128,6 +144,36 @@ export class RustListener implements ParseTreeListener {
      * @param ctx the parse tree
      */
     exitBlock?: (ctx: BlockContext) => void;
+    /**
+     * Enter a parse tree produced by `RustParser.func_def`.
+     * @param ctx the parse tree
+     */
+    enterFunc_def?: (ctx: Func_defContext) => void;
+    /**
+     * Exit a parse tree produced by `RustParser.func_def`.
+     * @param ctx the parse tree
+     */
+    exitFunc_def?: (ctx: Func_defContext) => void;
+    /**
+     * Enter a parse tree produced by `RustParser.params`.
+     * @param ctx the parse tree
+     */
+    enterParams?: (ctx: ParamsContext) => void;
+    /**
+     * Exit a parse tree produced by `RustParser.params`.
+     * @param ctx the parse tree
+     */
+    exitParams?: (ctx: ParamsContext) => void;
+    /**
+     * Enter a parse tree produced by `RustParser.param`.
+     * @param ctx the parse tree
+     */
+    enterParam?: (ctx: ParamContext) => void;
+    /**
+     * Exit a parse tree produced by `RustParser.param`.
+     * @param ctx the parse tree
+     */
+    exitParam?: (ctx: ParamContext) => void;
     /**
      * Enter a parse tree produced by the `UnaryOp`
      * labeled alternative in `RustParser.expr`.
@@ -201,6 +247,18 @@ export class RustListener implements ParseTreeListener {
      */
     exitIntLiteral?: (ctx: IntLiteralContext) => void;
     /**
+     * Enter a parse tree produced by the `FunctionCall`
+     * labeled alternative in `RustParser.expr`.
+     * @param ctx the parse tree
+     */
+    enterFunctionCall?: (ctx: FunctionCallContext) => void;
+    /**
+     * Exit a parse tree produced by the `FunctionCall`
+     * labeled alternative in `RustParser.expr`.
+     * @param ctx the parse tree
+     */
+    exitFunctionCall?: (ctx: FunctionCallContext) => void;
+    /**
      * Enter a parse tree produced by the `BinaryOp`
      * labeled alternative in `RustParser.expr`.
      * @param ctx the parse tree
@@ -212,6 +270,16 @@ export class RustListener implements ParseTreeListener {
      * @param ctx the parse tree
      */
     exitBinaryOp?: (ctx: BinaryOpContext) => void;
+    /**
+     * Enter a parse tree produced by `RustParser.args`.
+     * @param ctx the parse tree
+     */
+    enterArgs?: (ctx: ArgsContext) => void;
+    /**
+     * Exit a parse tree produced by `RustParser.args`.
+     * @param ctx the parse tree
+     */
+    exitArgs?: (ctx: ArgsContext) => void;
     /**
      * Enter a parse tree produced by `RustParser.type`.
      * @param ctx the parse tree
