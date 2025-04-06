@@ -64,6 +64,7 @@ export class ASTToJsonVisitor
     return {
       tag: "lit",
       val: parseInt(ctx.INT().getText()),
+      type: "i32",
     };
   }
 
@@ -71,6 +72,7 @@ export class ASTToJsonVisitor
     return {
       tag: "lit",
       val: ctx.TRUE() ? true : false,
+      type: "bool",
     };
   }
 
@@ -78,6 +80,7 @@ export class ASTToJsonVisitor
     return {
       tag: "lit",
       val: parseFloat(ctx.FLOAT().getText()),
+      type: "f64",
     };
   }
 
@@ -109,7 +112,7 @@ export class ASTToJsonVisitor
     return {
       tag: "cond",
       pred: this.visit(ctx.expr()),
-      con: this.visit(ctx.block(0)),
+      cons: this.visit(ctx.block(0)),
       alt: ctx.block(1) ? this.visit(ctx.block(1)) : null,
     };
   }
