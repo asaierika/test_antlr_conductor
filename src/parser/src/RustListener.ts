@@ -22,6 +22,7 @@ import { VariableContext } from "./RustParser.js";
 import { BoolLiteralContext } from "./RustParser.js";
 import { FloatLiteralContext } from "./RustParser.js";
 import { ParensContext } from "./RustParser.js";
+import { LogicalOpContext } from "./RustParser.js";
 import { IntLiteralContext } from "./RustParser.js";
 import { FunctionCallContext } from "./RustParser.js";
 import { BinaryOpContext } from "./RustParser.js";
@@ -234,6 +235,18 @@ export class RustListener implements ParseTreeListener {
      * @param ctx the parse tree
      */
     exitParens?: (ctx: ParensContext) => void;
+    /**
+     * Enter a parse tree produced by the `LogicalOp`
+     * labeled alternative in `RustParser.expr`.
+     * @param ctx the parse tree
+     */
+    enterLogicalOp?: (ctx: LogicalOpContext) => void;
+    /**
+     * Exit a parse tree produced by the `LogicalOp`
+     * labeled alternative in `RustParser.expr`.
+     * @param ctx the parse tree
+     */
+    exitLogicalOp?: (ctx: LogicalOpContext) => void;
     /**
      * Enter a parse tree produced by the `IntLiteral`
      * labeled alternative in `RustParser.expr`.

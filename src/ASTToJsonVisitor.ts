@@ -19,6 +19,7 @@ import {
   ParamContext,
   ParamsContext,
   Return_stmtContext,
+  LogicalOpContext,
 } from "./parser/src/RustParser";
 
 interface FunctionParameter {
@@ -41,23 +42,6 @@ export class ASTToJsonVisitor
     } as BlockContext;
 
     return this.visitBlock(syntheticBlock);
-  }
-
-  visitBinaryOp(ctx: BinaryOpContext): any {
-    return {
-      tag: "binop",
-      sym: ctx._op.text,
-      first: this.visit(ctx.expr(0)),
-      second: this.visit(ctx.expr(1)),
-    };
-  }
-
-  visitUnaryOp(ctx: UnaryOpContext): any {
-    return {
-      tag: "unop",
-      sym: ctx._op.text,
-      first: this.visit(ctx.expr()),
-    };
   }
 
   visitIntLiteral(ctx: IntLiteralContext): any {
@@ -91,6 +75,32 @@ export class ASTToJsonVisitor
     };
   }
 
+  visitUnaryOp(ctx: UnaryOpContext): any {
+    return {
+      tag: "unop",
+      sym: ctx._op.text == "-" ? "-unary" : ctx._op.text,
+      frst: this.visit(ctx.expr()),
+    };
+  }
+
+  visitBinaryOp(ctx: BinaryOpContext): any {
+    return {
+      tag: "binop",
+      sym: ctx._op.text,
+      frst: this.visit(ctx.expr(0)),
+      scnd: this.visit(ctx.expr(1)),
+    };
+  }
+
+  visitLogicalOp(ctx: LogicalOpContext): any {
+    return {
+      tag: "log",
+      sym: ctx._op.text,
+      frst: this.visit(ctx.expr(0)),
+      scnd: this.visit(ctx.expr(1)),
+    };
+  }
+
   visitLet_decl(ctx: Let_declContext): any {
     return {
       tag: "let",
@@ -110,7 +120,7 @@ export class ASTToJsonVisitor
 
   visitIf_stmt(ctx: If_stmtContext): any {
     return {
-      tag: "cond",
+      tag: "cond_stmt",
       pred: this.visit(ctx.expr()),
       cons: this.visit(ctx.block(0)),
       alt: ctx.block(1) ? this.visit(ctx.block(1)) : null,

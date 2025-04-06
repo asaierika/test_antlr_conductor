@@ -33,6 +33,7 @@ expr:
     | expr op=('*' | '/' | '%') expr     # BinaryOp
     | expr op=('+' | '-') expr           # BinaryOp
     | expr op=('==' | '!=' | '<' | '>' | '<=' | '>=') expr  # BinaryOp
+    | expr op=('&&' | '||') expr           # LogicalOp
     | ID                                 # Variable
     | ID '(' args? ')'                   # FunctionCall
     | INT                                # IntLiteral

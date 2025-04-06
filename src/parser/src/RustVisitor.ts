@@ -22,6 +22,7 @@ import { VariableContext } from "./RustParser.js";
 import { BoolLiteralContext } from "./RustParser.js";
 import { FloatLiteralContext } from "./RustParser.js";
 import { ParensContext } from "./RustParser.js";
+import { LogicalOpContext } from "./RustParser.js";
 import { IntLiteralContext } from "./RustParser.js";
 import { FunctionCallContext } from "./RustParser.js";
 import { BinaryOpContext } from "./RustParser.js";
@@ -156,6 +157,13 @@ export class RustVisitor<Result> extends AbstractParseTreeVisitor<Result> {
      * @return the visitor result
      */
     visitParens?: (ctx: ParensContext) => Result;
+    /**
+     * Visit a parse tree produced by the `LogicalOp`
+     * labeled alternative in `RustParser.expr`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitLogicalOp?: (ctx: LogicalOpContext) => Result;
     /**
      * Visit a parse tree produced by the `IntLiteral`
      * labeled alternative in `RustParser.expr`.

@@ -1,4 +1,48 @@
 export class RustTypeChecker {
+  head = (arr) => arr[0];
+  tail = (arr) => arr.slice(1);
+  pair = (a, b) => [a, b];
+
+  unary_arith_type = { tag: "fun", args: ["number"], res: "number" };
+
+  binary_arith_type = { tag: "fun", args: ["number", "number"], res: "number" };
+
+  number_comparison_type = {
+    tag: "fun",
+    args: ["number", "number"],
+    res: "bool",
+  };
+
+  binary_bool_type = { tag: "fun", args: ["bool"], res: "bool" };
+
+  unary_bool_type = { tag: "fun", args: ["bool"], res: "bool" };
+
+  global_type_frame = {
+    undefined: "undefined",
+    math_E: "number",
+    math_PI: "number",
+    math_sin: this.unary_arith_type,
+    "+": this.binary_arith_type,
+    "-": this.binary_arith_type,
+    "*": this.binary_arith_type,
+    "/": this.binary_arith_type,
+    "<": this.number_comparison_type,
+    ">": this.number_comparison_type,
+    "<=": this.number_comparison_type,
+    ">=": this.number_comparison_type,
+    "===": this.number_comparison_type,
+    "&&": this.binary_bool_type,
+    "||": this.binary_bool_type,
+    "-unary": this.unary_arith_type,
+    "!": this.unary_bool_type,
+  };
+
+  empty_type_environment = null;
+  global_type_environment = this.pair(
+    this.global_type_frame,
+    this.empty_type_environment
+  );
+
   annotate_comp = {
     lit: (comp) => comp,
     nam: (comp) => comp,
@@ -52,12 +96,13 @@ export class RustTypeChecker {
     }),
     blk: (comp) => ({ tag: "blk", body: this.annotate(comp.body) }),
     ret: (comp) => ({ tag: "ret", expr: this.annotate(comp.expr) }),
-    fun: (comp) =>
-      this.annotate({
-        tag: "fun",
-        sym: comp.sym,
-        expr: { tag: "lam", prms: comp.prms, body: comp.body },
-      }),
+    fun: (comp) => ({
+      tag: "fun",
+      sym: comp.sym,
+      prms: comp.prms,
+      body: this.annotate(comp.body),
+      ret_type: comp.ret_type,
+    }),
     let: (comp) => ({
       tag: "let",
       sym: comp.sym,
@@ -147,7 +192,7 @@ export class RustTypeChecker {
   // functions for each component tag
   type_comp = {
     lit: (comp, te) =>
-      comp.type != "flaot" && comp.type != "int" && comp.type != "bool"
+      comp.type != "f64" && comp.type != "i32" && comp.type != "bool"
         ? Error("unknown literal: " + comp.val)
         : comp.type,
     nam: (comp, te) => this.lookup_type(comp.sym, te),
@@ -375,7 +420,4 @@ export class RustTypeChecker {
     for (let i = 0; i < xs.length; i++) new_frame[xs[i]] = ts[i];
     return this.pair(new_frame, e);
   };
-  head = (arr) => arr[0];
-  tail = (arr) => arr.slice(1);
-  pair = (a, b) => [a, b];
 }
