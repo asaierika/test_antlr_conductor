@@ -1,4 +1,8 @@
-import { AbstractParseTreeVisitor, ParserRuleContext } from "antlr4ng";
+import {
+  AbstractParseTreeVisitor,
+  ParserRuleContext,
+  ParseTree,
+} from "antlr4ng";
 import { RustVisitor } from "./parser/src/RustVisitor";
 import {
   ProgContext,
@@ -20,6 +24,8 @@ import {
   ParamsContext,
   Return_stmtContext,
   LogicalOpContext,
+  Expr_stmtContext,
+  StmtContext,
 } from "./parser/src/RustParser";
 
 interface FunctionParameter {
@@ -138,6 +144,11 @@ export class ASTToJsonVisitor
           ? this.visit(ctx.stmt()[0])
           : { tag: "seq", stmts: ctx.stmt().map((stmt) => this.visit(stmt)) },
     };
+  }
+
+  visitExpr_stmt(ctx: Expr_stmtContext): any {
+    console.log("visit expr stmt");
+    return this.visit(ctx.expr());
   }
 
   visitWhile_loop(ctx: While_loopContext): any {

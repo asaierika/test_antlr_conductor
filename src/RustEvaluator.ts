@@ -5,6 +5,8 @@ import { RustLexer } from "./parser/src/RustLexer";
 import { RustParser } from "./parser/src/RustParser";
 import { ASTToJsonVisitor } from "./ASTToJsonVisitor";
 import { RustCompiler } from "./RustCompiler";
+import { RustTypeChecker } from "./RustTypeChecker";
+import { TypeCheckerError } from "./error/TypeCheckerError";
 
 export class RustEvaluator extends BasicEvaluator {
   private executionCount: number;
@@ -25,6 +27,7 @@ export class RustEvaluator extends BasicEvaluator {
       const tokenStream = new CommonTokenStream(lexer);
       const parser = new RustParser(tokenStream);
       const compiler = new RustCompiler();
+      const typeChecker = new RustTypeChecker();
 
       // Parse the input
       const tree = parser.prog();
@@ -33,6 +36,10 @@ export class RustEvaluator extends BasicEvaluator {
       const json = this.astToJsonVisitor.visit(tree);
       console.log("json: ");
       console.log(json);
+
+      typeChecker.check(json);
+      console.log("type checking passed");
+
       const complied = compiler.compile_program(json);
       console.log("compiled: ");
       console.log(complied);
@@ -40,8 +47,9 @@ export class RustEvaluator extends BasicEvaluator {
       // Send the result to the REPL
       this.conductor.sendOutput(`Result of expression: ${result}`);
     } catch (error) {
-      // Handle errors and send them to the REPL
-      if (error instanceof Error) {
+      if (error instanceof TypeCheckerError) {
+        this.conductor.sendOutput(`Type Checker Error: ${error.message}`);
+      } else if (error instanceof Error) {
         this.conductor.sendOutput(`Error: ${error.message}`);
       } else {
         this.conductor.sendOutput(`Error: ${String(error)}`);

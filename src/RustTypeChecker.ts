@@ -1,3 +1,5 @@
+import { TypeCheckerError } from "./error/TypeCheckerError";
+
 export class RustTypeChecker {
   head = (arr) => arr[0];
   tail = (arr) => arr.slice(1);
@@ -110,74 +112,15 @@ export class RustTypeChecker {
     }),
   };
 
-  //   annotate_sequence = (seq) => {
-  //     const len = seq.length;
-  //     const result = [];
-  //     let j = 0; // write pointer into result array
-  //     // loop through array
-  //     // use each type declaration ('assmt')
-  //     // as a type annotation for the subsequent
-  //     // constant declaration
-  //     for (let i = 0; i < len; i++) {
-  //       if (seq[i].tag === "assmt") {
-  //         const sym = seq[i].sym;
-  //         const t = this.transform_type(seq[i].expr);
-  //         const next = seq[++i];
-  //         if (next.tag === "const" && next.sym === sym) {
-  //           next.type = t;
-  //           next.expr = this.annotate(next.expr);
-  //           result[j++] = next;
-  //         } else if (next.tag === "fun" && next.sym === sym) {
-  //           next.type = t;
-  //           next.body = this.annotate(next.body);
-  //           result[j++] = next;
-  //         } else {
-  //           Error(
-  //             "declaration of name " +
-  //               sym +
-  //               " expected after its type declaration"
-  //           );
-  //         }
-  //       } else if (seq[i].tag === "const") {
-  //         Error(
-  //           "type declaration of name " +
-  //             seq[i].sym +
-  //             " before declaration missing"
-  //         );
-  //       } else {
-  //         result[j++] = this.annotate(seq[i]);
-  //       }
-  //     }
-  //     return result;
-  //   };
-  transform_types_or_null = (t) =>
-    t.tag === "lit" && t.val === null ? [] : this.transform_types(t);
-
-  transform_types = (t) =>
-    t.tag === "binop" && t.sym === "*"
-      ? [...this.transform_types(t.frst), ...this.transform_types(t.scnd)]
-      : [this.transform_type(t)];
-
-  transform_type = (t) =>
-    t.tag === "nam" &&
-    (t.sym === "number" || t.sym === "bool" || t.sym === "undefined")
-      ? t.sym
-      : t.tag === "binop" && t.sym === ">"
-      ? {
-          tag: "fun",
-          args: this.transform_types_or_null(t.frst),
-          res: this.transform_type(t.scnd),
-        }
-      : Error("illegal type expression");
-
   annotate = (comp) => this.annotate_comp[comp.tag](comp);
 
-  lookup_type = (x, e) =>
-    !e
-      ? Error("unbound name: " + x)
+  lookup_type = (x, e) => {
+    return !e || e.length == 0
+      ? new TypeCheckerError("unbound name: " + x)
       : this.head(e).hasOwnProperty(x)
       ? this.head(e)[x]
       : this.lookup_type(x, this.tail(e));
+  };
 
   // to check all code path returns designated type -> assumption all parsing wraps function body in a block
   RTS = [];
@@ -187,7 +130,7 @@ export class RustTypeChecker {
   type_comp = {
     lit: (comp, te) =>
       comp.type != "f64" && comp.type != "i32" && comp.type != "bool"
-        ? Error("unknown literal: " + comp.val)
+        ? new TypeCheckerError("unknown literal: " + comp.val)
         : comp.type,
     nam: (comp, te) => this.lookup_type(comp.sym, te),
     unop: (comp, te) =>
@@ -216,7 +159,7 @@ export class RustTypeChecker {
     cond: (comp, te) => {
       const t0 = this.type(comp.pred, te);
       if (t0 !== "bool")
-        Error(
+        throw new TypeCheckerError(
           "expected predicate type: bool, " +
             "actual predicate type: " +
             this.unparse_type(t0)
@@ -238,6 +181,12 @@ export class RustTypeChecker {
           return t2;
         }
       }
+
+      if (t1.tag === "ret" || t2.tag === "ret") {
+        throw new TypeCheckerError("Returning outside of a function");
+      }
+
+      return "undefined";
     },
     fun: (comp, te) => {
       const extended_te = this.extend_type_environment(
@@ -250,7 +199,7 @@ export class RustTypeChecker {
       this.RTS.push(comp.ret_type);
       this.type(comp.body, extended_te);
       if (!this.ALWAYS_RET)
-        Error(
+        throw new TypeCheckerError(
           "type Error in function declaration; not all code paths return " +
             this.unparse_type(comp.ret_type)
         );
@@ -260,7 +209,7 @@ export class RustTypeChecker {
     app: (comp, te) => {
       const fun_type = this.type(comp.fun, te);
       if (fun_type.tag !== "fun")
-        Error(
+        throw new TypeCheckerError(
           "type Error in application; function " +
             "expression must have function type; " +
             "actual type: " +
@@ -271,7 +220,7 @@ export class RustTypeChecker {
       if (this.equal_types(actual_arg_types, expected_arg_types)) {
         return comp.fun.ret_type;
       } else {
-        Error(
+        throw new TypeCheckerError(
           "type Error in application; " +
             "expected argument types: " +
             this.unparse_types(expected_arg_types) +
@@ -287,7 +236,7 @@ export class RustTypeChecker {
       if (this.equal_type(actual_type, declared_type)) {
         return "undefined";
       } else {
-        Error(
+        throw new TypeCheckerError(
           "type Error in variable declaration; " +
             "declared type: " +
             this.unparse_type(declared_type) +
@@ -303,7 +252,7 @@ export class RustTypeChecker {
       if (this.equal_type(actual_type, declared_type)) {
         return "undefined";
       } else {
-        Error(
+        throw new TypeCheckerError(
           "type Error in variable assignment; " +
             "declared type: " +
             this.unparse_type(declared_type) +
@@ -328,32 +277,46 @@ export class RustTypeChecker {
       return "undefined";
     },
     blk: (comp, te) => {
-      // scan out declarations
-      const decls = comp.body.stmts.filter(
-        (comp) => comp.tag === "const" || comp.tag === "fun"
-      );
-      const extended_te = this.extend_type_environment(
-        decls.map((comp) => comp.sym),
-        decls.map((comp) => comp.type),
-        te
-      );
-      return this.type(comp.body, extended_te);
+      let decls;
+      if (!comp.body.stmts) {
+        decls =
+          comp.body.tag === "let" || comp.body.tag === "fun"
+            ? [comp.body]
+            : null;
+      } else {
+        decls = comp.body.stmts.filter(
+          (comp) => comp.tag === "let" || comp.tag === "fun"
+        );
+      }
+      if (decls) {
+        const extended_te = this.extend_type_environment(
+          decls.map((comp) => comp.sym),
+          decls.map((comp) => comp.type),
+          te
+        );
+        return this.type(comp.body, extended_te);
+      }
+
+      return this.type(comp.body, te);
     },
     ret: (comp, te) => {
       const ret_type = this.type(comp.expr, te);
       if (!this.equal_type(this.RTS[this.RTS.length - 1], ret_type))
-        Error(
+        throw new TypeCheckerError(
           "type Error in function declaration; declared return type: " +
             this.unparse_type(this.RTS[this.RTS.length - 1]) +
             ", actual return type: " +
             this.unparse_type(ret_type)
         );
       this.ALWAYS_RET = true;
-      return { tag: "ret", always: true, ret_type };
+      return { tag: "ret", always: true, expr: ret_type };
     },
   };
 
-  type = (comp, te) => this.type_comp[comp.tag](comp, te);
+  type = (comp, te) => {
+    console.log(comp.tag);
+    return this.type_comp[comp.tag](comp, te);
+  };
 
   unparse_types = (ts) =>
     ts.length === 0
@@ -384,11 +347,19 @@ export class RustTypeChecker {
 
   extend_type_environment = (xs, ts, e) => {
     if (ts.length > xs.length)
-      Error("too few parameters in function declaration");
+      throw new TypeCheckerError("too few parameters in function declaration");
     if (ts.length < xs.length)
-      Error("too many parameters in function declaration");
+      throw new TypeCheckerError("too many parameters in function declaration");
     const new_frame = {};
     for (let i = 0; i < xs.length; i++) new_frame[xs[i]] = ts[i];
     return this.pair(new_frame, e);
+  };
+
+  check = (program) => {
+    try {
+      this.type(program, this.global_type_environment);
+    } catch (x) {
+      throw x;
+    }
   };
 }
