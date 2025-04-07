@@ -58,25 +58,26 @@ export class RustParser extends antlr.Parser {
     public static readonly RULE_let_decl = 2;
     public static readonly RULE_assign_stmt = 3;
     public static readonly RULE_expr_stmt = 4;
-    public static readonly RULE_if_stmt = 5;
-    public static readonly RULE_while_loop = 6;
-    public static readonly RULE_break_stmt = 7;
-    public static readonly RULE_continue_stmt = 8;
-    public static readonly RULE_return_stmt = 9;
-    public static readonly RULE_block = 10;
-    public static readonly RULE_func_def = 11;
-    public static readonly RULE_params = 12;
-    public static readonly RULE_param = 13;
-    public static readonly RULE_expr = 14;
-    public static readonly RULE_args = 15;
-    public static readonly RULE_type = 16;
+    public static readonly RULE_app_stmt = 5;
+    public static readonly RULE_if_stmt = 6;
+    public static readonly RULE_while_loop = 7;
+    public static readonly RULE_break_stmt = 8;
+    public static readonly RULE_continue_stmt = 9;
+    public static readonly RULE_return_stmt = 10;
+    public static readonly RULE_block = 11;
+    public static readonly RULE_func_def = 12;
+    public static readonly RULE_params = 13;
+    public static readonly RULE_param = 14;
+    public static readonly RULE_expr = 15;
+    public static readonly RULE_args = 16;
+    public static readonly RULE_type = 17;
 
     public static readonly literalNames = [
-        null, "'let'", "':'", "'='", "';'", "'if'", "'else'", "'while'", 
-        "'{'", "'}'", "'('", "')'", "'->'", "','", "'-'", "'!'", "'*'", 
-        "'/'", "'%'", "'+'", "'=='", "'!='", "'<'", "'>'", "'<='", "'>='", 
-        "'&&'", "'||'", "'i32'", "'bool'", "'f64'", "'true'", "'false'", 
-        "'break'", "'continue'", "'return'", "'fn'"
+        null, "'let'", "':'", "'='", "';'", "'('", "')'", "'if'", "'else'", 
+        "'while'", "'{'", "'}'", "'->'", "','", "'-'", "'!'", "'*'", "'/'", 
+        "'%'", "'+'", "'=='", "'!='", "'<'", "'>'", "'<='", "'>='", "'&&'", 
+        "'||'", "'i32'", "'bool'", "'f64'", "'true'", "'false'", "'break'", 
+        "'continue'", "'return'", "'fn'"
     ];
 
     public static readonly symbolicNames = [
@@ -87,9 +88,9 @@ export class RustParser extends antlr.Parser {
         "FLOAT"
     ];
     public static readonly ruleNames = [
-        "prog", "stmt", "let_decl", "assign_stmt", "expr_stmt", "if_stmt", 
-        "while_loop", "break_stmt", "continue_stmt", "return_stmt", "block", 
-        "func_def", "params", "param", "expr", "args", "type",
+        "prog", "stmt", "let_decl", "assign_stmt", "expr_stmt", "app_stmt", 
+        "if_stmt", "while_loop", "break_stmt", "continue_stmt", "return_stmt", 
+        "block", "func_def", "params", "param", "expr", "args", "type",
     ];
 
     public get grammarFileName(): string { return "Rust.g4"; }
@@ -113,21 +114,21 @@ export class RustParser extends antlr.Parser {
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 37;
+            this.state = 39;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
-            while ((((_la) & ~0x1F) === 0 && ((1 << _la) & 2147534242) !== 0) || ((((_la - 32)) & ~0x1F) === 0 && ((1 << (_la - 32)) & 927) !== 0)) {
+            while ((((_la) & ~0x1F) === 0 && ((1 << _la) & 2147534498) !== 0) || ((((_la - 32)) & ~0x1F) === 0 && ((1 << (_la - 32)) & 927) !== 0)) {
                 {
                 {
-                this.state = 34;
+                this.state = 36;
                 this.stmt();
                 }
                 }
-                this.state = 39;
+                this.state = 41;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
             }
-            this.state = 40;
+            this.state = 42;
             this.match(RustParser.EOF);
             }
         }
@@ -148,76 +149,83 @@ export class RustParser extends antlr.Parser {
         let localContext = new StmtContext(this.context, this.state);
         this.enterRule(localContext, 2, RustParser.RULE_stmt);
         try {
-            this.state = 52;
+            this.state = 55;
             this.errorHandler.sync(this);
             switch (this.interpreter.adaptivePredict(this.tokenStream, 1, this.context) ) {
             case 1:
                 this.enterOuterAlt(localContext, 1);
                 {
-                this.state = 42;
+                this.state = 44;
                 this.let_decl();
                 }
                 break;
             case 2:
                 this.enterOuterAlt(localContext, 2);
                 {
-                this.state = 43;
+                this.state = 45;
                 this.assign_stmt();
                 }
                 break;
             case 3:
                 this.enterOuterAlt(localContext, 3);
                 {
-                this.state = 44;
+                this.state = 46;
                 this.expr_stmt();
                 }
                 break;
             case 4:
                 this.enterOuterAlt(localContext, 4);
                 {
-                this.state = 45;
-                this.break_stmt();
+                this.state = 47;
+                this.app_stmt();
                 }
                 break;
             case 5:
                 this.enterOuterAlt(localContext, 5);
                 {
-                this.state = 46;
-                this.continue_stmt();
+                this.state = 48;
+                this.break_stmt();
                 }
                 break;
             case 6:
                 this.enterOuterAlt(localContext, 6);
                 {
-                this.state = 47;
-                this.while_loop();
+                this.state = 49;
+                this.continue_stmt();
                 }
                 break;
             case 7:
                 this.enterOuterAlt(localContext, 7);
                 {
-                this.state = 48;
-                this.if_stmt();
+                this.state = 50;
+                this.while_loop();
                 }
                 break;
             case 8:
                 this.enterOuterAlt(localContext, 8);
                 {
-                this.state = 49;
-                this.return_stmt();
+                this.state = 51;
+                this.if_stmt();
                 }
                 break;
             case 9:
                 this.enterOuterAlt(localContext, 9);
                 {
-                this.state = 50;
-                this.block();
+                this.state = 52;
+                this.return_stmt();
                 }
                 break;
             case 10:
                 this.enterOuterAlt(localContext, 10);
                 {
-                this.state = 51;
+                this.state = 53;
+                this.block();
+                }
+                break;
+            case 11:
+                this.enterOuterAlt(localContext, 11);
+                {
+                this.state = 54;
                 this.func_def();
                 }
                 break;
@@ -243,24 +251,24 @@ export class RustParser extends antlr.Parser {
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 54;
-            this.match(RustParser.T__0);
-            this.state = 55;
-            this.match(RustParser.ID);
-            this.state = 56;
-            this.match(RustParser.T__1);
             this.state = 57;
-            this.type_();
+            this.match(RustParser.T__0);
             this.state = 58;
-            this.match(RustParser.T__2);
+            this.match(RustParser.ID);
             this.state = 59;
-            this.expr(0);
+            this.match(RustParser.T__1);
+            this.state = 60;
+            this.type_();
             this.state = 61;
+            this.match(RustParser.T__2);
+            this.state = 62;
+            this.expr(0);
+            this.state = 64;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
             if (_la === 4) {
                 {
-                this.state = 60;
+                this.state = 63;
                 this.match(RustParser.T__3);
                 }
             }
@@ -287,18 +295,18 @@ export class RustParser extends antlr.Parser {
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 63;
+            this.state = 66;
             this.match(RustParser.ID);
-            this.state = 64;
-            this.match(RustParser.T__2);
-            this.state = 65;
-            this.expr(0);
             this.state = 67;
+            this.match(RustParser.T__2);
+            this.state = 68;
+            this.expr(0);
+            this.state = 70;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
             if (_la === 4) {
                 {
-                this.state = 66;
+                this.state = 69;
                 this.match(RustParser.T__3);
                 }
             }
@@ -325,14 +333,62 @@ export class RustParser extends antlr.Parser {
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 69;
+            this.state = 72;
             this.expr(0);
-            this.state = 71;
+            this.state = 74;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
             if (_la === 4) {
                 {
-                this.state = 70;
+                this.state = 73;
+                this.match(RustParser.T__3);
+                }
+            }
+
+            }
+        }
+        catch (re) {
+            if (re instanceof antlr.RecognitionException) {
+                this.errorHandler.reportError(this, re);
+                this.errorHandler.recover(this, re);
+            } else {
+                throw re;
+            }
+        }
+        finally {
+            this.exitRule();
+        }
+        return localContext;
+    }
+    public app_stmt(): App_stmtContext {
+        let localContext = new App_stmtContext(this.context, this.state);
+        this.enterRule(localContext, 10, RustParser.RULE_app_stmt);
+        let _la: number;
+        try {
+            this.enterOuterAlt(localContext, 1);
+            {
+            this.state = 76;
+            this.match(RustParser.ID);
+            this.state = 77;
+            this.match(RustParser.T__4);
+            this.state = 79;
+            this.errorHandler.sync(this);
+            _la = this.tokenStream.LA(1);
+            if ((((_la) & ~0x1F) === 0 && ((1 << _la) & 2147532832) !== 0) || ((((_la - 32)) & ~0x1F) === 0 && ((1 << (_la - 32)) & 897) !== 0)) {
+                {
+                this.state = 78;
+                this.args();
+                }
+            }
+
+            this.state = 81;
+            this.match(RustParser.T__5);
+            this.state = 83;
+            this.errorHandler.sync(this);
+            _la = this.tokenStream.LA(1);
+            if (_la === 4) {
+                {
+                this.state = 82;
                 this.match(RustParser.T__3);
                 }
             }
@@ -354,36 +410,36 @@ export class RustParser extends antlr.Parser {
     }
     public if_stmt(): If_stmtContext {
         let localContext = new If_stmtContext(this.context, this.state);
-        this.enterRule(localContext, 10, RustParser.RULE_if_stmt);
+        this.enterRule(localContext, 12, RustParser.RULE_if_stmt);
         let _la: number;
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 73;
-            this.match(RustParser.T__4);
-            this.state = 74;
+            this.state = 85;
+            this.match(RustParser.T__6);
+            this.state = 86;
             this.expr(0);
-            this.state = 75;
+            this.state = 87;
             this.block();
-            this.state = 81;
+            this.state = 93;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
-            if (_la === 6) {
+            if (_la === 8) {
                 {
-                this.state = 76;
-                this.match(RustParser.T__5);
-                this.state = 79;
+                this.state = 88;
+                this.match(RustParser.T__7);
+                this.state = 91;
                 this.errorHandler.sync(this);
                 switch (this.tokenStream.LA(1)) {
-                case RustParser.T__7:
+                case RustParser.T__9:
                     {
-                    this.state = 77;
+                    this.state = 89;
                     this.block();
                     }
                     break;
-                case RustParser.T__4:
+                case RustParser.T__6:
                     {
-                    this.state = 78;
+                    this.state = 90;
                     this.if_stmt();
                     }
                     break;
@@ -393,12 +449,12 @@ export class RustParser extends antlr.Parser {
                 }
             }
 
-            this.state = 84;
+            this.state = 96;
             this.errorHandler.sync(this);
-            switch (this.interpreter.adaptivePredict(this.tokenStream, 7, this.context) ) {
+            switch (this.interpreter.adaptivePredict(this.tokenStream, 9, this.context) ) {
             case 1:
                 {
-                this.state = 83;
+                this.state = 95;
                 this.match(RustParser.T__3);
                 }
                 break;
@@ -420,23 +476,23 @@ export class RustParser extends antlr.Parser {
     }
     public while_loop(): While_loopContext {
         let localContext = new While_loopContext(this.context, this.state);
-        this.enterRule(localContext, 12, RustParser.RULE_while_loop);
+        this.enterRule(localContext, 14, RustParser.RULE_while_loop);
         let _la: number;
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 86;
-            this.match(RustParser.T__6);
-            this.state = 87;
+            this.state = 98;
+            this.match(RustParser.T__8);
+            this.state = 99;
             this.expr(0);
-            this.state = 88;
+            this.state = 100;
             this.block();
-            this.state = 90;
+            this.state = 102;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
             if (_la === 4) {
                 {
-                this.state = 89;
+                this.state = 101;
                 this.match(RustParser.T__3);
                 }
             }
@@ -458,19 +514,19 @@ export class RustParser extends antlr.Parser {
     }
     public break_stmt(): Break_stmtContext {
         let localContext = new Break_stmtContext(this.context, this.state);
-        this.enterRule(localContext, 14, RustParser.RULE_break_stmt);
+        this.enterRule(localContext, 16, RustParser.RULE_break_stmt);
         let _la: number;
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 92;
+            this.state = 104;
             this.match(RustParser.BREAK);
-            this.state = 94;
+            this.state = 106;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
             if (_la === 4) {
                 {
-                this.state = 93;
+                this.state = 105;
                 this.match(RustParser.T__3);
                 }
             }
@@ -492,19 +548,19 @@ export class RustParser extends antlr.Parser {
     }
     public continue_stmt(): Continue_stmtContext {
         let localContext = new Continue_stmtContext(this.context, this.state);
-        this.enterRule(localContext, 16, RustParser.RULE_continue_stmt);
+        this.enterRule(localContext, 18, RustParser.RULE_continue_stmt);
         let _la: number;
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 96;
+            this.state = 108;
             this.match(RustParser.CONTINUE);
-            this.state = 98;
+            this.state = 110;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
             if (_la === 4) {
                 {
-                this.state = 97;
+                this.state = 109;
                 this.match(RustParser.T__3);
                 }
             }
@@ -526,29 +582,29 @@ export class RustParser extends antlr.Parser {
     }
     public return_stmt(): Return_stmtContext {
         let localContext = new Return_stmtContext(this.context, this.state);
-        this.enterRule(localContext, 18, RustParser.RULE_return_stmt);
+        this.enterRule(localContext, 20, RustParser.RULE_return_stmt);
         let _la: number;
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 100;
+            this.state = 112;
             this.match(RustParser.RETURN);
-            this.state = 102;
+            this.state = 114;
             this.errorHandler.sync(this);
-            switch (this.interpreter.adaptivePredict(this.tokenStream, 11, this.context) ) {
+            switch (this.interpreter.adaptivePredict(this.tokenStream, 13, this.context) ) {
             case 1:
                 {
-                this.state = 101;
+                this.state = 113;
                 this.expr(0);
                 }
                 break;
             }
-            this.state = 105;
+            this.state = 117;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
             if (_la === 4) {
                 {
-                this.state = 104;
+                this.state = 116;
                 this.match(RustParser.T__3);
                 }
             }
@@ -570,35 +626,35 @@ export class RustParser extends antlr.Parser {
     }
     public block(): BlockContext {
         let localContext = new BlockContext(this.context, this.state);
-        this.enterRule(localContext, 20, RustParser.RULE_block);
+        this.enterRule(localContext, 22, RustParser.RULE_block);
         let _la: number;
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 107;
-            this.match(RustParser.T__7);
-            this.state = 111;
+            this.state = 119;
+            this.match(RustParser.T__9);
+            this.state = 123;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
-            while ((((_la) & ~0x1F) === 0 && ((1 << _la) & 2147534242) !== 0) || ((((_la - 32)) & ~0x1F) === 0 && ((1 << (_la - 32)) & 927) !== 0)) {
+            while ((((_la) & ~0x1F) === 0 && ((1 << _la) & 2147534498) !== 0) || ((((_la - 32)) & ~0x1F) === 0 && ((1 << (_la - 32)) & 927) !== 0)) {
                 {
                 {
-                this.state = 108;
+                this.state = 120;
                 this.stmt();
                 }
                 }
-                this.state = 113;
+                this.state = 125;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
             }
-            this.state = 114;
-            this.match(RustParser.T__8);
-            this.state = 116;
+            this.state = 126;
+            this.match(RustParser.T__10);
+            this.state = 128;
             this.errorHandler.sync(this);
-            switch (this.interpreter.adaptivePredict(this.tokenStream, 14, this.context) ) {
+            switch (this.interpreter.adaptivePredict(this.tokenStream, 16, this.context) ) {
             case 1:
                 {
-                this.state = 115;
+                this.state = 127;
                 this.match(RustParser.T__3);
                 }
                 break;
@@ -620,42 +676,42 @@ export class RustParser extends antlr.Parser {
     }
     public func_def(): Func_defContext {
         let localContext = new Func_defContext(this.context, this.state);
-        this.enterRule(localContext, 22, RustParser.RULE_func_def);
+        this.enterRule(localContext, 24, RustParser.RULE_func_def);
         let _la: number;
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 118;
+            this.state = 130;
             this.match(RustParser.FN);
-            this.state = 119;
+            this.state = 131;
             this.match(RustParser.ID);
-            this.state = 120;
-            this.match(RustParser.T__9);
-            this.state = 122;
+            this.state = 132;
+            this.match(RustParser.T__4);
+            this.state = 134;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
             if (_la === 39) {
                 {
-                this.state = 121;
+                this.state = 133;
                 this.params();
                 }
             }
 
-            this.state = 124;
-            this.match(RustParser.T__10);
-            this.state = 127;
+            this.state = 136;
+            this.match(RustParser.T__5);
+            this.state = 139;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
             if (_la === 12) {
                 {
-                this.state = 125;
+                this.state = 137;
                 this.match(RustParser.T__11);
-                this.state = 126;
+                this.state = 138;
                 this.type_();
                 }
             }
 
-            this.state = 129;
+            this.state = 141;
             this.block();
             }
         }
@@ -674,26 +730,26 @@ export class RustParser extends antlr.Parser {
     }
     public params(): ParamsContext {
         let localContext = new ParamsContext(this.context, this.state);
-        this.enterRule(localContext, 24, RustParser.RULE_params);
+        this.enterRule(localContext, 26, RustParser.RULE_params);
         let _la: number;
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 131;
+            this.state = 143;
             this.param();
-            this.state = 136;
+            this.state = 148;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
             while (_la === 13) {
                 {
                 {
-                this.state = 132;
+                this.state = 144;
                 this.match(RustParser.T__12);
-                this.state = 133;
+                this.state = 145;
                 this.param();
                 }
                 }
-                this.state = 138;
+                this.state = 150;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
             }
@@ -714,15 +770,15 @@ export class RustParser extends antlr.Parser {
     }
     public param(): ParamContext {
         let localContext = new ParamContext(this.context, this.state);
-        this.enterRule(localContext, 26, RustParser.RULE_param);
+        this.enterRule(localContext, 28, RustParser.RULE_param);
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 139;
+            this.state = 151;
             this.match(RustParser.ID);
-            this.state = 140;
+            this.state = 152;
             this.match(RustParser.T__1);
-            this.state = 141;
+            this.state = 153;
             this.type_();
             }
         }
@@ -751,23 +807,24 @@ export class RustParser extends antlr.Parser {
         let parentState = this.state;
         let localContext = new ExprContext(this.context, parentState);
         let previousContext = localContext;
-        let _startState = 28;
-        this.enterRecursionRule(localContext, 28, RustParser.RULE_expr, _p);
+        let _startState = 30;
+        this.enterRecursionRule(localContext, 30, RustParser.RULE_expr, _p);
         let _la: number;
         try {
             let alternative: number;
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 161;
+            this.state = 167;
             this.errorHandler.sync(this);
-            switch (this.interpreter.adaptivePredict(this.tokenStream, 19, this.context) ) {
-            case 1:
+            switch (this.tokenStream.LA(1)) {
+            case RustParser.T__13:
+            case RustParser.T__14:
                 {
                 localContext = new UnaryOpContext(localContext);
                 this.context = localContext;
                 previousContext = localContext;
 
-                this.state = 144;
+                this.state = 156;
                 (localContext as UnaryOpContext)._op = this.tokenStream.LT(1);
                 _la = this.tokenStream.LA(1);
                 if(!(_la === 14 || _la === 15)) {
@@ -777,96 +834,75 @@ export class RustParser extends antlr.Parser {
                     this.errorHandler.reportMatch(this);
                     this.consume();
                 }
-                this.state = 145;
-                this.expr(12);
+                this.state = 157;
+                this.expr(11);
                 }
                 break;
-            case 2:
+            case RustParser.ID:
                 {
                 localContext = new VariableContext(localContext);
                 this.context = localContext;
                 previousContext = localContext;
-                this.state = 146;
+                this.state = 158;
                 this.match(RustParser.ID);
                 }
                 break;
-            case 3:
-                {
-                localContext = new FunctionCallContext(localContext);
-                this.context = localContext;
-                previousContext = localContext;
-                this.state = 147;
-                this.match(RustParser.ID);
-                this.state = 148;
-                this.match(RustParser.T__9);
-                this.state = 150;
-                this.errorHandler.sync(this);
-                _la = this.tokenStream.LA(1);
-                if (((((_la - 10)) & ~0x1F) === 0 && ((1 << (_la - 10)) & 3764387889) !== 0)) {
-                    {
-                    this.state = 149;
-                    this.args();
-                    }
-                }
-
-                this.state = 152;
-                this.match(RustParser.T__10);
-                }
-                break;
-            case 4:
+            case RustParser.INT:
                 {
                 localContext = new IntLiteralContext(localContext);
                 this.context = localContext;
                 previousContext = localContext;
-                this.state = 153;
+                this.state = 159;
                 this.match(RustParser.INT);
                 }
                 break;
-            case 5:
+            case RustParser.FLOAT:
                 {
                 localContext = new FloatLiteralContext(localContext);
                 this.context = localContext;
                 previousContext = localContext;
-                this.state = 154;
+                this.state = 160;
                 this.match(RustParser.FLOAT);
                 }
                 break;
-            case 6:
+            case RustParser.TRUE:
                 {
                 localContext = new BoolLiteralContext(localContext);
                 this.context = localContext;
                 previousContext = localContext;
-                this.state = 155;
+                this.state = 161;
                 this.match(RustParser.TRUE);
                 }
                 break;
-            case 7:
+            case RustParser.FALSE:
                 {
                 localContext = new BoolLiteralContext(localContext);
                 this.context = localContext;
                 previousContext = localContext;
-                this.state = 156;
+                this.state = 162;
                 this.match(RustParser.FALSE);
                 }
                 break;
-            case 8:
+            case RustParser.T__4:
                 {
                 localContext = new ParensContext(localContext);
                 this.context = localContext;
                 previousContext = localContext;
-                this.state = 157;
-                this.match(RustParser.T__9);
-                this.state = 158;
+                this.state = 163;
+                this.match(RustParser.T__4);
+                this.state = 164;
                 this.expr(0);
-                this.state = 159;
-                this.match(RustParser.T__10);
+                this.state = 165;
+                this.match(RustParser.T__5);
                 }
                 break;
+            default:
+                throw new antlr.NoViableAltException(this);
             }
             this.context!.stop = this.tokenStream.LT(-1);
-            this.state = 177;
+            this.state = 183;
             this.errorHandler.sync(this);
-            alternative = this.interpreter.adaptivePredict(this.tokenStream, 21, this.context);
+            alternative = this.interpreter.adaptivePredict(this.tokenStream, 22, this.context);
             while (alternative !== 2 && alternative !== antlr.ATN.INVALID_ALT_NUMBER) {
                 if (alternative === 1) {
                     if (this.parseListeners != null) {
@@ -874,18 +910,18 @@ export class RustParser extends antlr.Parser {
                     }
                     previousContext = localContext;
                     {
-                    this.state = 175;
+                    this.state = 181;
                     this.errorHandler.sync(this);
-                    switch (this.interpreter.adaptivePredict(this.tokenStream, 20, this.context) ) {
+                    switch (this.interpreter.adaptivePredict(this.tokenStream, 21, this.context) ) {
                     case 1:
                         {
                         localContext = new BinaryOpContext(new ExprContext(parentContext, parentState));
                         this.pushNewRecursionContext(localContext, _startState, RustParser.RULE_expr);
-                        this.state = 163;
-                        if (!(this.precpred(this.context, 11))) {
-                            throw this.createFailedPredicateException("this.precpred(this.context, 11)");
+                        this.state = 169;
+                        if (!(this.precpred(this.context, 10))) {
+                            throw this.createFailedPredicateException("this.precpred(this.context, 10)");
                         }
-                        this.state = 164;
+                        this.state = 170;
                         (localContext as BinaryOpContext)._op = this.tokenStream.LT(1);
                         _la = this.tokenStream.LA(1);
                         if(!((((_la) & ~0x1F) === 0 && ((1 << _la) & 458752) !== 0))) {
@@ -895,19 +931,19 @@ export class RustParser extends antlr.Parser {
                             this.errorHandler.reportMatch(this);
                             this.consume();
                         }
-                        this.state = 165;
-                        this.expr(12);
+                        this.state = 171;
+                        this.expr(11);
                         }
                         break;
                     case 2:
                         {
                         localContext = new BinaryOpContext(new ExprContext(parentContext, parentState));
                         this.pushNewRecursionContext(localContext, _startState, RustParser.RULE_expr);
-                        this.state = 166;
-                        if (!(this.precpred(this.context, 10))) {
-                            throw this.createFailedPredicateException("this.precpred(this.context, 10)");
+                        this.state = 172;
+                        if (!(this.precpred(this.context, 9))) {
+                            throw this.createFailedPredicateException("this.precpred(this.context, 9)");
                         }
-                        this.state = 167;
+                        this.state = 173;
                         (localContext as BinaryOpContext)._op = this.tokenStream.LT(1);
                         _la = this.tokenStream.LA(1);
                         if(!(_la === 14 || _la === 19)) {
@@ -917,19 +953,19 @@ export class RustParser extends antlr.Parser {
                             this.errorHandler.reportMatch(this);
                             this.consume();
                         }
-                        this.state = 168;
-                        this.expr(11);
+                        this.state = 174;
+                        this.expr(10);
                         }
                         break;
                     case 3:
                         {
                         localContext = new BinaryOpContext(new ExprContext(parentContext, parentState));
                         this.pushNewRecursionContext(localContext, _startState, RustParser.RULE_expr);
-                        this.state = 169;
-                        if (!(this.precpred(this.context, 9))) {
-                            throw this.createFailedPredicateException("this.precpred(this.context, 9)");
+                        this.state = 175;
+                        if (!(this.precpred(this.context, 8))) {
+                            throw this.createFailedPredicateException("this.precpred(this.context, 8)");
                         }
-                        this.state = 170;
+                        this.state = 176;
                         (localContext as BinaryOpContext)._op = this.tokenStream.LT(1);
                         _la = this.tokenStream.LA(1);
                         if(!((((_la) & ~0x1F) === 0 && ((1 << _la) & 66060288) !== 0))) {
@@ -939,19 +975,19 @@ export class RustParser extends antlr.Parser {
                             this.errorHandler.reportMatch(this);
                             this.consume();
                         }
-                        this.state = 171;
-                        this.expr(10);
+                        this.state = 177;
+                        this.expr(9);
                         }
                         break;
                     case 4:
                         {
                         localContext = new LogicalOpContext(new ExprContext(parentContext, parentState));
                         this.pushNewRecursionContext(localContext, _startState, RustParser.RULE_expr);
-                        this.state = 172;
-                        if (!(this.precpred(this.context, 8))) {
-                            throw this.createFailedPredicateException("this.precpred(this.context, 8)");
+                        this.state = 178;
+                        if (!(this.precpred(this.context, 7))) {
+                            throw this.createFailedPredicateException("this.precpred(this.context, 7)");
                         }
-                        this.state = 173;
+                        this.state = 179;
                         (localContext as LogicalOpContext)._op = this.tokenStream.LT(1);
                         _la = this.tokenStream.LA(1);
                         if(!(_la === 26 || _la === 27)) {
@@ -961,16 +997,16 @@ export class RustParser extends antlr.Parser {
                             this.errorHandler.reportMatch(this);
                             this.consume();
                         }
-                        this.state = 174;
-                        this.expr(9);
+                        this.state = 180;
+                        this.expr(8);
                         }
                         break;
                     }
                     }
                 }
-                this.state = 179;
+                this.state = 185;
                 this.errorHandler.sync(this);
-                alternative = this.interpreter.adaptivePredict(this.tokenStream, 21, this.context);
+                alternative = this.interpreter.adaptivePredict(this.tokenStream, 22, this.context);
             }
             }
         }
@@ -989,26 +1025,26 @@ export class RustParser extends antlr.Parser {
     }
     public args(): ArgsContext {
         let localContext = new ArgsContext(this.context, this.state);
-        this.enterRule(localContext, 30, RustParser.RULE_args);
+        this.enterRule(localContext, 32, RustParser.RULE_args);
         let _la: number;
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 180;
+            this.state = 186;
             this.expr(0);
-            this.state = 185;
+            this.state = 191;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
             while (_la === 13) {
                 {
                 {
-                this.state = 181;
+                this.state = 187;
                 this.match(RustParser.T__12);
-                this.state = 182;
+                this.state = 188;
                 this.expr(0);
                 }
                 }
-                this.state = 187;
+                this.state = 193;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
             }
@@ -1029,12 +1065,12 @@ export class RustParser extends antlr.Parser {
     }
     public type_(): TypeContext {
         let localContext = new TypeContext(this.context, this.state);
-        this.enterRule(localContext, 32, RustParser.RULE_type);
+        this.enterRule(localContext, 34, RustParser.RULE_type);
         let _la: number;
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 188;
+            this.state = 194;
             _la = this.tokenStream.LA(1);
             if(!((((_la) & ~0x1F) === 0 && ((1 << _la) & 1879048192) !== 0))) {
             this.errorHandler.recoverInline(this);
@@ -1061,7 +1097,7 @@ export class RustParser extends antlr.Parser {
 
     public override sempred(localContext: antlr.ParserRuleContext | null, ruleIndex: number, predIndex: number): boolean {
         switch (ruleIndex) {
-        case 14:
+        case 15:
             return this.expr_sempred(localContext as ExprContext, predIndex);
         }
         return true;
@@ -1069,87 +1105,89 @@ export class RustParser extends antlr.Parser {
     private expr_sempred(localContext: ExprContext | null, predIndex: number): boolean {
         switch (predIndex) {
         case 0:
-            return this.precpred(this.context, 11);
-        case 1:
             return this.precpred(this.context, 10);
-        case 2:
+        case 1:
             return this.precpred(this.context, 9);
-        case 3:
+        case 2:
             return this.precpred(this.context, 8);
+        case 3:
+            return this.precpred(this.context, 7);
         }
         return true;
     }
 
     public static readonly _serializedATN: number[] = [
-        4,1,41,191,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,7,
+        4,1,41,197,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,7,
         6,2,7,7,7,2,8,7,8,2,9,7,9,2,10,7,10,2,11,7,11,2,12,7,12,2,13,7,13,
-        2,14,7,14,2,15,7,15,2,16,7,16,1,0,5,0,36,8,0,10,0,12,0,39,9,0,1,
-        0,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,1,53,8,1,1,2,1,2,
-        1,2,1,2,1,2,1,2,1,2,3,2,62,8,2,1,3,1,3,1,3,1,3,3,3,68,8,3,1,4,1,
-        4,3,4,72,8,4,1,5,1,5,1,5,1,5,1,5,1,5,3,5,80,8,5,3,5,82,8,5,1,5,3,
-        5,85,8,5,1,6,1,6,1,6,1,6,3,6,91,8,6,1,7,1,7,3,7,95,8,7,1,8,1,8,3,
-        8,99,8,8,1,9,1,9,3,9,103,8,9,1,9,3,9,106,8,9,1,10,1,10,5,10,110,
-        8,10,10,10,12,10,113,9,10,1,10,1,10,3,10,117,8,10,1,11,1,11,1,11,
-        1,11,3,11,123,8,11,1,11,1,11,1,11,3,11,128,8,11,1,11,1,11,1,12,1,
-        12,1,12,5,12,135,8,12,10,12,12,12,138,9,12,1,13,1,13,1,13,1,13,1,
-        14,1,14,1,14,1,14,1,14,1,14,1,14,3,14,151,8,14,1,14,1,14,1,14,1,
-        14,1,14,1,14,1,14,1,14,1,14,3,14,162,8,14,1,14,1,14,1,14,1,14,1,
-        14,1,14,1,14,1,14,1,14,1,14,1,14,1,14,5,14,176,8,14,10,14,12,14,
-        179,9,14,1,15,1,15,1,15,5,15,184,8,15,10,15,12,15,187,9,15,1,16,
-        1,16,1,16,0,1,28,17,0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,
-        0,6,1,0,14,15,1,0,16,18,2,0,14,14,19,19,1,0,20,25,1,0,26,27,1,0,
-        28,30,212,0,37,1,0,0,0,2,52,1,0,0,0,4,54,1,0,0,0,6,63,1,0,0,0,8,
-        69,1,0,0,0,10,73,1,0,0,0,12,86,1,0,0,0,14,92,1,0,0,0,16,96,1,0,0,
-        0,18,100,1,0,0,0,20,107,1,0,0,0,22,118,1,0,0,0,24,131,1,0,0,0,26,
-        139,1,0,0,0,28,161,1,0,0,0,30,180,1,0,0,0,32,188,1,0,0,0,34,36,3,
-        2,1,0,35,34,1,0,0,0,36,39,1,0,0,0,37,35,1,0,0,0,37,38,1,0,0,0,38,
-        40,1,0,0,0,39,37,1,0,0,0,40,41,5,0,0,1,41,1,1,0,0,0,42,53,3,4,2,
-        0,43,53,3,6,3,0,44,53,3,8,4,0,45,53,3,14,7,0,46,53,3,16,8,0,47,53,
-        3,12,6,0,48,53,3,10,5,0,49,53,3,18,9,0,50,53,3,20,10,0,51,53,3,22,
-        11,0,52,42,1,0,0,0,52,43,1,0,0,0,52,44,1,0,0,0,52,45,1,0,0,0,52,
-        46,1,0,0,0,52,47,1,0,0,0,52,48,1,0,0,0,52,49,1,0,0,0,52,50,1,0,0,
-        0,52,51,1,0,0,0,53,3,1,0,0,0,54,55,5,1,0,0,55,56,5,39,0,0,56,57,
-        5,2,0,0,57,58,3,32,16,0,58,59,5,3,0,0,59,61,3,28,14,0,60,62,5,4,
-        0,0,61,60,1,0,0,0,61,62,1,0,0,0,62,5,1,0,0,0,63,64,5,39,0,0,64,65,
-        5,3,0,0,65,67,3,28,14,0,66,68,5,4,0,0,67,66,1,0,0,0,67,68,1,0,0,
-        0,68,7,1,0,0,0,69,71,3,28,14,0,70,72,5,4,0,0,71,70,1,0,0,0,71,72,
-        1,0,0,0,72,9,1,0,0,0,73,74,5,5,0,0,74,75,3,28,14,0,75,81,3,20,10,
-        0,76,79,5,6,0,0,77,80,3,20,10,0,78,80,3,10,5,0,79,77,1,0,0,0,79,
-        78,1,0,0,0,80,82,1,0,0,0,81,76,1,0,0,0,81,82,1,0,0,0,82,84,1,0,0,
-        0,83,85,5,4,0,0,84,83,1,0,0,0,84,85,1,0,0,0,85,11,1,0,0,0,86,87,
-        5,7,0,0,87,88,3,28,14,0,88,90,3,20,10,0,89,91,5,4,0,0,90,89,1,0,
-        0,0,90,91,1,0,0,0,91,13,1,0,0,0,92,94,5,33,0,0,93,95,5,4,0,0,94,
-        93,1,0,0,0,94,95,1,0,0,0,95,15,1,0,0,0,96,98,5,34,0,0,97,99,5,4,
-        0,0,98,97,1,0,0,0,98,99,1,0,0,0,99,17,1,0,0,0,100,102,5,35,0,0,101,
-        103,3,28,14,0,102,101,1,0,0,0,102,103,1,0,0,0,103,105,1,0,0,0,104,
-        106,5,4,0,0,105,104,1,0,0,0,105,106,1,0,0,0,106,19,1,0,0,0,107,111,
-        5,8,0,0,108,110,3,2,1,0,109,108,1,0,0,0,110,113,1,0,0,0,111,109,
-        1,0,0,0,111,112,1,0,0,0,112,114,1,0,0,0,113,111,1,0,0,0,114,116,
-        5,9,0,0,115,117,5,4,0,0,116,115,1,0,0,0,116,117,1,0,0,0,117,21,1,
-        0,0,0,118,119,5,36,0,0,119,120,5,39,0,0,120,122,5,10,0,0,121,123,
-        3,24,12,0,122,121,1,0,0,0,122,123,1,0,0,0,123,124,1,0,0,0,124,127,
-        5,11,0,0,125,126,5,12,0,0,126,128,3,32,16,0,127,125,1,0,0,0,127,
-        128,1,0,0,0,128,129,1,0,0,0,129,130,3,20,10,0,130,23,1,0,0,0,131,
-        136,3,26,13,0,132,133,5,13,0,0,133,135,3,26,13,0,134,132,1,0,0,0,
-        135,138,1,0,0,0,136,134,1,0,0,0,136,137,1,0,0,0,137,25,1,0,0,0,138,
-        136,1,0,0,0,139,140,5,39,0,0,140,141,5,2,0,0,141,142,3,32,16,0,142,
-        27,1,0,0,0,143,144,6,14,-1,0,144,145,7,0,0,0,145,162,3,28,14,12,
-        146,162,5,39,0,0,147,148,5,39,0,0,148,150,5,10,0,0,149,151,3,30,
-        15,0,150,149,1,0,0,0,150,151,1,0,0,0,151,152,1,0,0,0,152,162,5,11,
-        0,0,153,162,5,40,0,0,154,162,5,41,0,0,155,162,5,31,0,0,156,162,5,
-        32,0,0,157,158,5,10,0,0,158,159,3,28,14,0,159,160,5,11,0,0,160,162,
-        1,0,0,0,161,143,1,0,0,0,161,146,1,0,0,0,161,147,1,0,0,0,161,153,
-        1,0,0,0,161,154,1,0,0,0,161,155,1,0,0,0,161,156,1,0,0,0,161,157,
-        1,0,0,0,162,177,1,0,0,0,163,164,10,11,0,0,164,165,7,1,0,0,165,176,
-        3,28,14,12,166,167,10,10,0,0,167,168,7,2,0,0,168,176,3,28,14,11,
-        169,170,10,9,0,0,170,171,7,3,0,0,171,176,3,28,14,10,172,173,10,8,
-        0,0,173,174,7,4,0,0,174,176,3,28,14,9,175,163,1,0,0,0,175,166,1,
-        0,0,0,175,169,1,0,0,0,175,172,1,0,0,0,176,179,1,0,0,0,177,175,1,
-        0,0,0,177,178,1,0,0,0,178,29,1,0,0,0,179,177,1,0,0,0,180,185,3,28,
-        14,0,181,182,5,13,0,0,182,184,3,28,14,0,183,181,1,0,0,0,184,187,
-        1,0,0,0,185,183,1,0,0,0,185,186,1,0,0,0,186,31,1,0,0,0,187,185,1,
-        0,0,0,188,189,7,5,0,0,189,33,1,0,0,0,23,37,52,61,67,71,79,81,84,
-        90,94,98,102,105,111,116,122,127,136,150,161,175,177,185
+        2,14,7,14,2,15,7,15,2,16,7,16,2,17,7,17,1,0,5,0,38,8,0,10,0,12,0,
+        41,9,0,1,0,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,1,56,
+        8,1,1,2,1,2,1,2,1,2,1,2,1,2,1,2,3,2,65,8,2,1,3,1,3,1,3,1,3,3,3,71,
+        8,3,1,4,1,4,3,4,75,8,4,1,5,1,5,1,5,3,5,80,8,5,1,5,1,5,3,5,84,8,5,
+        1,6,1,6,1,6,1,6,1,6,1,6,3,6,92,8,6,3,6,94,8,6,1,6,3,6,97,8,6,1,7,
+        1,7,1,7,1,7,3,7,103,8,7,1,8,1,8,3,8,107,8,8,1,9,1,9,3,9,111,8,9,
+        1,10,1,10,3,10,115,8,10,1,10,3,10,118,8,10,1,11,1,11,5,11,122,8,
+        11,10,11,12,11,125,9,11,1,11,1,11,3,11,129,8,11,1,12,1,12,1,12,1,
+        12,3,12,135,8,12,1,12,1,12,1,12,3,12,140,8,12,1,12,1,12,1,13,1,13,
+        1,13,5,13,147,8,13,10,13,12,13,150,9,13,1,14,1,14,1,14,1,14,1,15,
+        1,15,1,15,1,15,1,15,1,15,1,15,1,15,1,15,1,15,1,15,1,15,3,15,168,
+        8,15,1,15,1,15,1,15,1,15,1,15,1,15,1,15,1,15,1,15,1,15,1,15,1,15,
+        5,15,182,8,15,10,15,12,15,185,9,15,1,16,1,16,1,16,5,16,190,8,16,
+        10,16,12,16,193,9,16,1,17,1,17,1,17,0,1,30,18,0,2,4,6,8,10,12,14,
+        16,18,20,22,24,26,28,30,32,34,0,6,1,0,14,15,1,0,16,18,2,0,14,14,
+        19,19,1,0,20,25,1,0,26,27,1,0,28,30,218,0,39,1,0,0,0,2,55,1,0,0,
+        0,4,57,1,0,0,0,6,66,1,0,0,0,8,72,1,0,0,0,10,76,1,0,0,0,12,85,1,0,
+        0,0,14,98,1,0,0,0,16,104,1,0,0,0,18,108,1,0,0,0,20,112,1,0,0,0,22,
+        119,1,0,0,0,24,130,1,0,0,0,26,143,1,0,0,0,28,151,1,0,0,0,30,167,
+        1,0,0,0,32,186,1,0,0,0,34,194,1,0,0,0,36,38,3,2,1,0,37,36,1,0,0,
+        0,38,41,1,0,0,0,39,37,1,0,0,0,39,40,1,0,0,0,40,42,1,0,0,0,41,39,
+        1,0,0,0,42,43,5,0,0,1,43,1,1,0,0,0,44,56,3,4,2,0,45,56,3,6,3,0,46,
+        56,3,8,4,0,47,56,3,10,5,0,48,56,3,16,8,0,49,56,3,18,9,0,50,56,3,
+        14,7,0,51,56,3,12,6,0,52,56,3,20,10,0,53,56,3,22,11,0,54,56,3,24,
+        12,0,55,44,1,0,0,0,55,45,1,0,0,0,55,46,1,0,0,0,55,47,1,0,0,0,55,
+        48,1,0,0,0,55,49,1,0,0,0,55,50,1,0,0,0,55,51,1,0,0,0,55,52,1,0,0,
+        0,55,53,1,0,0,0,55,54,1,0,0,0,56,3,1,0,0,0,57,58,5,1,0,0,58,59,5,
+        39,0,0,59,60,5,2,0,0,60,61,3,34,17,0,61,62,5,3,0,0,62,64,3,30,15,
+        0,63,65,5,4,0,0,64,63,1,0,0,0,64,65,1,0,0,0,65,5,1,0,0,0,66,67,5,
+        39,0,0,67,68,5,3,0,0,68,70,3,30,15,0,69,71,5,4,0,0,70,69,1,0,0,0,
+        70,71,1,0,0,0,71,7,1,0,0,0,72,74,3,30,15,0,73,75,5,4,0,0,74,73,1,
+        0,0,0,74,75,1,0,0,0,75,9,1,0,0,0,76,77,5,39,0,0,77,79,5,5,0,0,78,
+        80,3,32,16,0,79,78,1,0,0,0,79,80,1,0,0,0,80,81,1,0,0,0,81,83,5,6,
+        0,0,82,84,5,4,0,0,83,82,1,0,0,0,83,84,1,0,0,0,84,11,1,0,0,0,85,86,
+        5,7,0,0,86,87,3,30,15,0,87,93,3,22,11,0,88,91,5,8,0,0,89,92,3,22,
+        11,0,90,92,3,12,6,0,91,89,1,0,0,0,91,90,1,0,0,0,92,94,1,0,0,0,93,
+        88,1,0,0,0,93,94,1,0,0,0,94,96,1,0,0,0,95,97,5,4,0,0,96,95,1,0,0,
+        0,96,97,1,0,0,0,97,13,1,0,0,0,98,99,5,9,0,0,99,100,3,30,15,0,100,
+        102,3,22,11,0,101,103,5,4,0,0,102,101,1,0,0,0,102,103,1,0,0,0,103,
+        15,1,0,0,0,104,106,5,33,0,0,105,107,5,4,0,0,106,105,1,0,0,0,106,
+        107,1,0,0,0,107,17,1,0,0,0,108,110,5,34,0,0,109,111,5,4,0,0,110,
+        109,1,0,0,0,110,111,1,0,0,0,111,19,1,0,0,0,112,114,5,35,0,0,113,
+        115,3,30,15,0,114,113,1,0,0,0,114,115,1,0,0,0,115,117,1,0,0,0,116,
+        118,5,4,0,0,117,116,1,0,0,0,117,118,1,0,0,0,118,21,1,0,0,0,119,123,
+        5,10,0,0,120,122,3,2,1,0,121,120,1,0,0,0,122,125,1,0,0,0,123,121,
+        1,0,0,0,123,124,1,0,0,0,124,126,1,0,0,0,125,123,1,0,0,0,126,128,
+        5,11,0,0,127,129,5,4,0,0,128,127,1,0,0,0,128,129,1,0,0,0,129,23,
+        1,0,0,0,130,131,5,36,0,0,131,132,5,39,0,0,132,134,5,5,0,0,133,135,
+        3,26,13,0,134,133,1,0,0,0,134,135,1,0,0,0,135,136,1,0,0,0,136,139,
+        5,6,0,0,137,138,5,12,0,0,138,140,3,34,17,0,139,137,1,0,0,0,139,140,
+        1,0,0,0,140,141,1,0,0,0,141,142,3,22,11,0,142,25,1,0,0,0,143,148,
+        3,28,14,0,144,145,5,13,0,0,145,147,3,28,14,0,146,144,1,0,0,0,147,
+        150,1,0,0,0,148,146,1,0,0,0,148,149,1,0,0,0,149,27,1,0,0,0,150,148,
+        1,0,0,0,151,152,5,39,0,0,152,153,5,2,0,0,153,154,3,34,17,0,154,29,
+        1,0,0,0,155,156,6,15,-1,0,156,157,7,0,0,0,157,168,3,30,15,11,158,
+        168,5,39,0,0,159,168,5,40,0,0,160,168,5,41,0,0,161,168,5,31,0,0,
+        162,168,5,32,0,0,163,164,5,5,0,0,164,165,3,30,15,0,165,166,5,6,0,
+        0,166,168,1,0,0,0,167,155,1,0,0,0,167,158,1,0,0,0,167,159,1,0,0,
+        0,167,160,1,0,0,0,167,161,1,0,0,0,167,162,1,0,0,0,167,163,1,0,0,
+        0,168,183,1,0,0,0,169,170,10,10,0,0,170,171,7,1,0,0,171,182,3,30,
+        15,11,172,173,10,9,0,0,173,174,7,2,0,0,174,182,3,30,15,10,175,176,
+        10,8,0,0,176,177,7,3,0,0,177,182,3,30,15,9,178,179,10,7,0,0,179,
+        180,7,4,0,0,180,182,3,30,15,8,181,169,1,0,0,0,181,172,1,0,0,0,181,
+        175,1,0,0,0,181,178,1,0,0,0,182,185,1,0,0,0,183,181,1,0,0,0,183,
+        184,1,0,0,0,184,31,1,0,0,0,185,183,1,0,0,0,186,191,3,30,15,0,187,
+        188,5,13,0,0,188,190,3,30,15,0,189,187,1,0,0,0,190,193,1,0,0,0,191,
+        189,1,0,0,0,191,192,1,0,0,0,192,33,1,0,0,0,193,191,1,0,0,0,194,195,
+        7,5,0,0,195,35,1,0,0,0,24,39,55,64,70,74,79,83,91,93,96,102,106,
+        110,114,117,123,128,134,139,148,167,181,183,191
     ];
 
     private static __ATN: antlr.ATN;
@@ -1222,6 +1260,9 @@ export class StmtContext extends antlr.ParserRuleContext {
     }
     public expr_stmt(): Expr_stmtContext | null {
         return this.getRuleContext(0, Expr_stmtContext);
+    }
+    public app_stmt(): App_stmtContext | null {
+        return this.getRuleContext(0, App_stmtContext);
     }
     public break_stmt(): Break_stmtContext | null {
         return this.getRuleContext(0, Break_stmtContext);
@@ -1359,6 +1400,39 @@ export class Expr_stmtContext extends antlr.ParserRuleContext {
     public override accept<Result>(visitor: RustVisitor<Result>): Result | null {
         if (visitor.visitExpr_stmt) {
             return visitor.visitExpr_stmt(this);
+        } else {
+            return visitor.visitChildren(this);
+        }
+    }
+}
+
+
+export class App_stmtContext extends antlr.ParserRuleContext {
+    public constructor(parent: antlr.ParserRuleContext | null, invokingState: number) {
+        super(parent, invokingState);
+    }
+    public ID(): antlr.TerminalNode {
+        return this.getToken(RustParser.ID, 0)!;
+    }
+    public args(): ArgsContext | null {
+        return this.getRuleContext(0, ArgsContext);
+    }
+    public override get ruleIndex(): number {
+        return RustParser.RULE_app_stmt;
+    }
+    public override enterRule(listener: RustListener): void {
+        if(listener.enterApp_stmt) {
+             listener.enterApp_stmt(this);
+        }
+    }
+    public override exitRule(listener: RustListener): void {
+        if(listener.exitApp_stmt) {
+             listener.exitApp_stmt(this);
+        }
+    }
+    public override accept<Result>(visitor: RustVisitor<Result>): Result | null {
+        if (visitor.visitApp_stmt) {
+            return visitor.visitApp_stmt(this);
         } else {
             return visitor.visitChildren(this);
         }
@@ -1880,35 +1954,6 @@ export class IntLiteralContext extends ExprContext {
     public override accept<Result>(visitor: RustVisitor<Result>): Result | null {
         if (visitor.visitIntLiteral) {
             return visitor.visitIntLiteral(this);
-        } else {
-            return visitor.visitChildren(this);
-        }
-    }
-}
-export class FunctionCallContext extends ExprContext {
-    public constructor(ctx: ExprContext) {
-        super(ctx.parent, ctx.invokingState);
-        super.copyFrom(ctx);
-    }
-    public ID(): antlr.TerminalNode {
-        return this.getToken(RustParser.ID, 0)!;
-    }
-    public args(): ArgsContext | null {
-        return this.getRuleContext(0, ArgsContext);
-    }
-    public override enterRule(listener: RustListener): void {
-        if(listener.enterFunctionCall) {
-             listener.enterFunctionCall(this);
-        }
-    }
-    public override exitRule(listener: RustListener): void {
-        if(listener.exitFunctionCall) {
-             listener.exitFunctionCall(this);
-        }
-    }
-    public override accept<Result>(visitor: RustVisitor<Result>): Result | null {
-        if (visitor.visitFunctionCall) {
-            return visitor.visitFunctionCall(this);
         } else {
             return visitor.visitChildren(this);
         }

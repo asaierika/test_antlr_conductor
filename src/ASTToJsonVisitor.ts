@@ -25,7 +25,8 @@ import {
   Return_stmtContext,
   LogicalOpContext,
   Expr_stmtContext,
-  StmtContext,
+  App_stmtContext,
+  ArgsContext,
 } from "./parser/src/RustParser";
 
 interface FunctionParameter {
@@ -107,23 +108,6 @@ export class ASTToJsonVisitor
     };
   }
 
-  visitLet_decl(ctx: Let_declContext): any {
-    return {
-      tag: "let",
-      sym: ctx.ID().getText(),
-      vartag: ctx.type().getText(),
-      expr: this.visit(ctx.expr()),
-    };
-  }
-
-  visitAssign_stmt(ctx: Assign_stmtContext): any {
-    return {
-      tag: "assmt",
-      sym: ctx.ID().getText(),
-      expr: this.visit(ctx.expr()),
-    };
-  }
-
   visitIf_stmt(ctx: If_stmtContext): any {
     return {
       tag: "cond",
@@ -131,24 +115,6 @@ export class ASTToJsonVisitor
       cons: this.visit(ctx.block(0)),
       alt: ctx.block(1) ? this.visit(ctx.block(1)) : null,
     };
-  }
-
-  visitBlock(ctx: BlockContext): any {
-    if (ctx.stmt().length == 0) {
-      return {};
-    }
-    return {
-      tag: "blk",
-      body:
-        ctx.stmt().length == 1
-          ? this.visit(ctx.stmt()[0])
-          : { tag: "seq", stmts: ctx.stmt().map((stmt) => this.visit(stmt)) },
-    };
-  }
-
-  visitExpr_stmt(ctx: Expr_stmtContext): any {
-    console.log("visit expr stmt");
-    return this.visit(ctx.expr());
   }
 
   visitWhile_loop(ctx: While_loopContext): any {
@@ -177,13 +143,71 @@ export class ASTToJsonVisitor
     return { tag: "continue" };
   }
 
+  visitApp_stmt(ctx: App_stmtContext): any {
+    return {
+      tag: "app",
+      fun: {
+        tag: "nam",
+        sym: ctx.ID().getText(),
+      },
+      args: ctx.args() ? this.visitArgs(ctx.args()) : [],
+    };
+  }
+
+  visitArgs(ctx: ArgsContext): any {
+    return ctx.expr().map((expr) => this.visit(expr));
+  }
+
+  visitBlock(ctx: BlockContext): any {
+    if (ctx.stmt().length == 0) {
+      return {};
+    }
+    return {
+      tag: "blk",
+      body:
+        ctx.stmt().length == 1
+          ? this.visit(ctx.stmt()[0])
+          : { tag: "seq", stmts: ctx.stmt().map((stmt) => this.visit(stmt)) },
+    };
+  }
+
+  visitReturn_stmt(ctx: Return_stmtContext): any {
+    return {
+      tag: "ret",
+      expr: this.visit(ctx.expr()),
+    };
+  }
+
   visitFunc_def(ctx: Func_defContext): any {
     return {
       tag: "fun",
       sym: ctx.ID().getText(),
       prms: ctx.params() ? this.visitParams(ctx.params()) : [],
       body: this.visit(ctx.block()),
-      ret_type: ctx.type().getText(),
+      type: {
+        tag: "fun",
+        args: ctx.params()
+          ? this.visitParams(ctx.params()).map((prm) => prm.type)
+          : [],
+        res: ctx.type().getText() == "" ? "undefined" : ctx.type().getText(),
+      },
+    };
+  }
+
+  visitLet_decl(ctx: Let_declContext): any {
+    return {
+      tag: "let",
+      sym: ctx.ID().getText(),
+      type: ctx.type().getText(),
+      expr: this.visit(ctx.expr()),
+    };
+  }
+
+  visitAssign_stmt(ctx: Assign_stmtContext): any {
+    return {
+      tag: "assmt",
+      sym: ctx.ID().getText(),
+      expr: this.visit(ctx.expr()),
     };
   }
 
@@ -198,10 +222,7 @@ export class ASTToJsonVisitor
     };
   }
 
-  visitReturn_stmt(ctx: Return_stmtContext): any {
-    return {
-      tag: "ret",
-      expr: this.visit(ctx.expr()),
-    };
+  visitExpr_stmt(ctx: Expr_stmtContext): any {
+    return this.visit(ctx.expr());
   }
 }

@@ -229,9 +229,8 @@ export class RustCompiler {
           expr: {
             tag: "lam",
             prms: comp.prms.map((prm) => prm.name),
-            prms_type: comp.prms.map((prm) => prm.type),
-            ret_type: comp.type,
             body: comp.body,
+            arity: comp.prms.length,
           },
         },
         ce

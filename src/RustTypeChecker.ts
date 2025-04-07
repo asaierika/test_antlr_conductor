@@ -81,6 +81,17 @@ export class RustTypeChecker {
       cons: this.annotate(comp.cons),
       alt: this.annotate(comp.alt),
     }),
+    while: (comp) => ({
+      tag: "cond",
+      pred: this.annotate(comp.pred),
+      body: this.annotate(comp.body),
+    }),
+    break: (comp) => ({
+      tag: "break",
+    }),
+    continue: (comp) => ({
+      tag: "continue",
+    }),
     app: (comp) => ({
       tag: "app",
       fun: this.annotate(comp.fun),
@@ -97,12 +108,12 @@ export class RustTypeChecker {
       sym: comp.sym,
       prms: comp.prms,
       body: this.annotate(comp.body),
-      ret_type: comp.ret_type,
+      type: comp.type,
     }),
     let: (comp) => ({
       tag: "let",
       sym: comp.sym,
-      vartag: comp.vartag,
+      type: comp.type,
       expr: this.annotate(comp.expr),
     }),
     assmt: (comp) => ({
@@ -167,6 +178,7 @@ export class RustTypeChecker {
       const t1 = this.type(comp.cons, te);
       const t2 = this.type(comp.alt, te);
 
+      // if t1 and t2 are ret stmt, type check is done in type_comp[ret]
       if (this.RTS.length) {
         if (t1.tag !== "ret" && t2.tag !== "ret") {
           return "undefined";
@@ -188,20 +200,33 @@ export class RustTypeChecker {
 
       return "undefined";
     },
+    while: (comp, te) => {
+      const t0 = this.type(comp.pred, te);
+      if (t0 !== "bool")
+        throw new TypeCheckerError(
+          "expected predicate type: bool, " +
+            "actual predicate type: " +
+            this.unparse_type(t0)
+        );
+      const t1 = this.type(comp.body, te);
+      return t1;
+    },
+    break: (comp, te) => "undefined",
+    continue: (comp, te) => "undefined",
     fun: (comp, te) => {
       const extended_te = this.extend_type_environment(
-        comp.prms.name,
-        comp.prms.name.type,
+        comp.prms.map((prm) => prm.name),
+        comp.prms.map((prm) => prm.type),
         te
       );
 
       this.ALWAYS_RET = true; // Even with nested functions when back to this fun scope means nested return so gv is still true no affect
-      this.RTS.push(comp.ret_type);
+      this.RTS.push(comp.type.res);
       this.type(comp.body, extended_te);
       if (!this.ALWAYS_RET)
         throw new TypeCheckerError(
           "type Error in function declaration; not all code paths return " +
-            this.unparse_type(comp.ret_type)
+            this.unparse_type(comp.type.res)
         );
       this.RTS.pop();
       return "undefined";
@@ -215,10 +240,10 @@ export class RustTypeChecker {
             "actual type: " +
             this.unparse_type(fun_type)
         );
-      const expected_arg_types = comp.fun.prms.type;
+      const expected_arg_types = fun_type.args;
       const actual_arg_types = comp.args.map((e) => this.type(e, te));
       if (this.equal_types(actual_arg_types, expected_arg_types)) {
-        return comp.fun.ret_type;
+        return fun_type.res;
       } else {
         throw new TypeCheckerError(
           "type Error in application; " +
@@ -231,7 +256,7 @@ export class RustTypeChecker {
       }
     },
     let: (comp, te) => {
-      const declared_type = comp.vartag;
+      const declared_type = comp.type;
       const actual_type = this.type(comp.expr, te);
       if (this.equal_type(actual_type, declared_type)) {
         return "undefined";
@@ -288,16 +313,25 @@ export class RustTypeChecker {
           (comp) => comp.tag === "let" || comp.tag === "fun"
         );
       }
+      let extended_te = te;
       if (decls) {
-        const extended_te = this.extend_type_environment(
+        extended_te = this.extend_type_environment(
           decls.map((comp) => comp.sym),
           decls.map((comp) => comp.type),
           te
         );
-        return this.type(comp.body, extended_te);
       }
 
-      return this.type(comp.body, te);
+      const result = this.type(comp.body, extended_te);
+      if (
+        this.RTS.length &&
+        this.RTS[this.RTS.length - 1] !== "undefined" &&
+        !(result.tag === "ret" && result.always)
+      ) {
+        // handles the case where there is only one statement instead of a sequence
+        this.ALWAYS_RET = false;
+      }
+      return result;
     },
     ret: (comp, te) => {
       const ret_type = this.type(comp.expr, te);
@@ -314,7 +348,7 @@ export class RustTypeChecker {
   };
 
   type = (comp, te) => {
-    console.log(comp.tag);
+    //console.log(comp.tag);
     return this.type_comp[comp.tag](comp, te);
   };
 
