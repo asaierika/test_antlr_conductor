@@ -8,6 +8,7 @@ import { StmtContext } from "./RustParser.js";
 import { Let_declContext } from "./RustParser.js";
 import { Assign_stmtContext } from "./RustParser.js";
 import { Expr_stmtContext } from "./RustParser.js";
+import { App_stmtContext } from "./RustParser.js";
 import { If_stmtContext } from "./RustParser.js";
 import { While_loopContext } from "./RustParser.js";
 import { Break_stmtContext } from "./RustParser.js";
@@ -22,8 +23,8 @@ import { VariableContext } from "./RustParser.js";
 import { BoolLiteralContext } from "./RustParser.js";
 import { FloatLiteralContext } from "./RustParser.js";
 import { ParensContext } from "./RustParser.js";
+import { LogicalOpContext } from "./RustParser.js";
 import { IntLiteralContext } from "./RustParser.js";
-import { FunctionCallContext } from "./RustParser.js";
 import { BinaryOpContext } from "./RustParser.js";
 import { ArgsContext } from "./RustParser.js";
 import { TypeContext } from "./RustParser.js";
@@ -67,6 +68,12 @@ export class RustVisitor<Result> extends AbstractParseTreeVisitor<Result> {
      * @return the visitor result
      */
     visitExpr_stmt?: (ctx: Expr_stmtContext) => Result;
+    /**
+     * Visit a parse tree produced by `RustParser.app_stmt`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitApp_stmt?: (ctx: App_stmtContext) => Result;
     /**
      * Visit a parse tree produced by `RustParser.if_stmt`.
      * @param ctx the parse tree
@@ -157,19 +164,19 @@ export class RustVisitor<Result> extends AbstractParseTreeVisitor<Result> {
      */
     visitParens?: (ctx: ParensContext) => Result;
     /**
+     * Visit a parse tree produced by the `LogicalOp`
+     * labeled alternative in `RustParser.expr`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitLogicalOp?: (ctx: LogicalOpContext) => Result;
+    /**
      * Visit a parse tree produced by the `IntLiteral`
      * labeled alternative in `RustParser.expr`.
      * @param ctx the parse tree
      * @return the visitor result
      */
     visitIntLiteral?: (ctx: IntLiteralContext) => Result;
-    /**
-     * Visit a parse tree produced by the `FunctionCall`
-     * labeled alternative in `RustParser.expr`.
-     * @param ctx the parse tree
-     * @return the visitor result
-     */
-    visitFunctionCall?: (ctx: FunctionCallContext) => Result;
     /**
      * Visit a parse tree produced by the `BinaryOp`
      * labeled alternative in `RustParser.expr`.

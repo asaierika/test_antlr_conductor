@@ -6,6 +6,7 @@ prog: stmt* EOF;
 stmt: let_decl 
     | assign_stmt
     | expr_stmt
+    | app_stmt
     | break_stmt   
     | continue_stmt  
     | while_loop
@@ -14,32 +15,33 @@ stmt: let_decl
     | block
     | func_def;   
 
-let_decl: 'let' ID ':' type '=' expr;
-assign_stmt: ID '=' expr;
-expr_stmt: expr;
-if_stmt: 'if' expr block ('else' (block | if_stmt))?;
-while_loop: 'while' expr block;
-break_stmt: 'break';      
-continue_stmt: 'continue'; 
-return_stmt: 'return' expr?;
-block: '{' stmt* '}';
+let_decl: 'let' ID ':' type '=' expr ';'?;
+assign_stmt: ID '=' expr ';'?;
+expr_stmt: expr ';'?;
+app_stmt: ID '(' args? ')' ';'?;
+if_stmt: 'if' expr block ('else' (block | if_stmt))?  ';'?;
+while_loop: 'while' expr block ';'?;
+break_stmt: 'break' ';'?;      
+continue_stmt: 'continue' ';'?; 
+return_stmt: 'return' expr? ';'?;
+block: '{' stmt* '}' ';'?;
 
 func_def: 'fn' ID '(' params? ')' ('->' type)? block;
 params: param (',' param)*;
 param: ID ':' type;
 
 expr: 
-    op=('-' | '!') expr                     # UnaryOp
-    | expr op=('*' | '/' | '%') expr     # BinaryOp
-    | expr op=('+' | '-') expr           # BinaryOp
+    op=('-' | '!') expr                                     # UnaryOp
+    | expr op=('*' | '/' | '%') expr                        # BinaryOp
+    | expr op=('+' | '-') expr                              # BinaryOp
     | expr op=('==' | '!=' | '<' | '>' | '<=' | '>=') expr  # BinaryOp
-    | ID                                 # Variable
-    | ID '(' args? ')'                   # FunctionCall
-    | INT                                # IntLiteral
-    | FLOAT                              # FloatLiteral
-    | TRUE                               # BoolLiteral
-    | FALSE                              # BoolLiteral
-    | '(' expr ')'                       # Parens
+    | expr op=('&&' | '||') expr                            # LogicalOp
+    | ID                                                    # Variable
+    | INT                                                   # IntLiteral
+    | FLOAT                                                 # FloatLiteral
+    | TRUE                                                  # BoolLiteral
+    | FALSE                                                 # BoolLiteral
+    | '(' expr ')'                                          # Parens
     ;
 
 args: expr (',' expr)*;

@@ -45,9 +45,9 @@ export class RustCompiler {
   compile_sequence = (seq, ce) => {
     if (seq.length === 0)
       return (this.instrs[this.wc++] = { tag: "LDC", val: undefined });
-    let first = true;
+    let frst = true;
     for (let comp of seq) {
-      first ? (first = false) : (this.instrs[this.wc++] = { tag: "POP" });
+      frst ? (frst = false) : (this.instrs[this.wc++] = { tag: "POP" });
       this.compile(comp, ce);
     }
   };
@@ -79,27 +79,27 @@ export class RustCompiler {
         };
       },
     unop: (comp, ce) => {
-      this.compile(comp.first, ce);
+      this.compile(comp.frst, ce);
       this.instrs[this.wc++] = { tag: "UNOP", sym: comp.sym };
     },
     binop: (comp, ce) => {
-      this.compile(comp.first, ce);
-      this.compile(comp.second, ce);
+      this.compile(comp.frst, ce);
+      this.compile(comp.scnd, ce);
       this.instrs[this.wc++] = { tag: "BINOP", sym: comp.sym };
     },
     log: (comp, ce) => {
       this.compile(
         comp.sym == "&&"
           ? {
-              tag: "cond_expr",
-              pred: comp.first,
+              tag: "cond",
+              pred: comp.frst,
               cons: { tag: "lit", val: true },
-              alt: comp.second,
+              alt: comp.scnd,
             }
           : {
-              tag: "cond_expr",
-              pred: comp.first,
-              cons: comp.second,
+              tag: "cond",
+              pred: comp.frst,
+              cons: comp.scnd,
               alt: { tag: "lit", val: false },
             },
         ce
@@ -229,9 +229,8 @@ export class RustCompiler {
           expr: {
             tag: "lam",
             prms: comp.prms.map((prm) => prm.name),
-            prms_type: comp.prms.map((prm) => prm.type),
-            ret_type: comp.type,
             body: comp.body,
+            arity: comp.prms.length,
           },
         },
         ce
