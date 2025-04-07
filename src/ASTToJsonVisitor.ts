@@ -120,7 +120,7 @@ export class ASTToJsonVisitor
 
   visitIf_stmt(ctx: If_stmtContext): any {
     return {
-      tag: "cond_stmt",
+      tag: "cond",
       pred: this.visit(ctx.expr()),
       cons: this.visit(ctx.block(0)),
       alt: ctx.block(1) ? this.visit(ctx.block(1)) : null,

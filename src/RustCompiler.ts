@@ -91,13 +91,13 @@ export class RustCompiler {
       this.compile(
         comp.sym == "&&"
           ? {
-              tag: "cond_expr",
+              tag: "cond",
               pred: comp.frst,
               cons: { tag: "lit", val: true },
               alt: comp.scnd,
             }
           : {
-              tag: "cond_expr",
+              tag: "cond",
               pred: comp.frst,
               cons: comp.scnd,
               alt: { tag: "lit", val: false },
@@ -105,7 +105,7 @@ export class RustCompiler {
         ce
       );
     },
-    cond_stmt: (comp, ce) => {
+    cond: (comp, ce) => {
       this.compile(comp.pred, ce);
       const jump_on_false_instruction = { tag: "JOF", addr: undefined };
       this.instrs[this.wc++] = jump_on_false_instruction;

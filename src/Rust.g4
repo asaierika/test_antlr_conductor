@@ -29,18 +29,18 @@ params: param (',' param)*;
 param: ID ':' type;
 
 expr: 
-    op=('-' | '!') expr                     # UnaryOp
-    | expr op=('*' | '/' | '%') expr     # BinaryOp
-    | expr op=('+' | '-') expr           # BinaryOp
+    op=('-' | '!') expr                                     # UnaryOp
+    | expr op=('*' | '/' | '%') expr                        # BinaryOp
+    | expr op=('+' | '-') expr                              # BinaryOp
     | expr op=('==' | '!=' | '<' | '>' | '<=' | '>=') expr  # BinaryOp
-    | expr op=('&&' | '||') expr           # LogicalOp
-    | ID                                 # Variable
-    | ID '(' args? ')'                   # FunctionCall
-    | INT                                # IntLiteral
-    | FLOAT                              # FloatLiteral
-    | TRUE                               # BoolLiteral
-    | FALSE                              # BoolLiteral
-    | '(' expr ')'                       # Parens
+    | expr op=('&&' | '||') expr                            # LogicalOp
+    | ID                                                    # Variable
+    | ID '(' args? ')'                                      # FunctionCall
+    | INT                                                   # IntLiteral
+    | FLOAT                                                 # FloatLiteral
+    | TRUE                                                  # BoolLiteral
+    | FALSE                                                 # BoolLiteral
+    | '(' expr ')'                                          # Parens
     ;
 
 args: expr (',' expr)*;

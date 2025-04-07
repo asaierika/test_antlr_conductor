@@ -61,26 +61,20 @@ export class RustTypeChecker {
       this.annotate(
         comp.sym == "&&"
           ? {
-              tag: "cond_expr",
+              tag: "cond",
               pred: comp.frst,
               cons: comp.scnd,
               alt: { tag: "lit", val: false },
             }
           : {
-              tag: "cond_expr",
+              tag: "cond",
               pred: comp.frst,
               cons: { tag: "lit", val: true },
               alt: comp.scnd,
             }
       ),
-    cond_expr: (comp) => ({
-      tag: "cond_expr",
-      pred: this.annotate(comp.pred),
-      cons: this.annotate(comp.cons),
-      alt: this.annotate(comp.alt),
-    }),
-    cond_stmt: (comp) => ({
-      tag: "cond_stmt",
+    cond: (comp) => ({
+      tag: "cond",
       pred: this.annotate(comp.pred),
       cons: this.annotate(comp.cons),
       alt: this.annotate(comp.alt),
@@ -219,7 +213,7 @@ export class RustTypeChecker {
         },
         te
       ),
-    cond_expr: (comp, te) => {
+    cond: (comp, te) => {
       const t0 = this.type(comp.pred, te);
       if (t0 !== "bool")
         Error(
@@ -230,7 +224,7 @@ export class RustTypeChecker {
       const t1 = this.type(comp.cons, te);
       const t2 = this.type(comp.alt, te);
 
-      if (this.RTS.length && comp.is_stmt) {
+      if (this.RTS.length) {
         if (t1.tag !== "ret" && t2.tag !== "ret") {
           return "undefined";
         } else if (t1.tag === "ret" && t2.tag === "ret") {
@@ -244,29 +238,6 @@ export class RustTypeChecker {
           return t2;
         }
       }
-
-      if (this.equal_type(t1, t2)) {
-        return t1;
-      } else {
-        Error(
-          "types of branches not matching; " +
-            "consequent type: " +
-            this.unparse_type(t1) +
-            ", " +
-            "alternative type: " +
-            this.unparse_type(t2)
-        );
-      }
-    },
-    // outside of function bodies,
-    // conditional statements are
-    // treated as conditional expressions
-    cond_stmt: (comp, te) => {
-      comp.tag = "cond_expr";
-      comp.is_stmt = true;
-      const stmt_type = this.type(comp, te);
-      if (stmt_type.tag === "ret") this.ALWAYS_RET = stmt_type.always;
-      return stmt_type;
     },
     fun: (comp, te) => {
       const extended_te = this.extend_type_environment(
