@@ -211,8 +211,8 @@ export class RustTypeChecker {
       const t1 = this.type(comp.body, te);
       return t1;
     },
-    break: (comp, te) => "undefined",
-    continue: (comp, te) => "undefined",
+    break: (comp, te) => ({ tag: "break", expr: "undefined" }),
+    continue: (comp, te) => ({ tag: "continue", expr: "undefined" }),
     fun: (comp, te) => {
       const extended_te = this.extend_type_environment(
         comp.prms.map((prm) => prm.name),
@@ -290,6 +290,9 @@ export class RustTypeChecker {
     seq: (comp, te) => {
       for (let i = 0; i < comp.stmts.length; i++) {
         const stmt_type = this.type(comp.stmts[i], te);
+        if (stmt_type.tag === "break" || stmt_type.tag === "continue") {
+          break;
+        }
         if (stmt_type.tag === "ret" && stmt_type.always) {
           this.ALWAYS_RET = true;
           return stmt_type;
@@ -371,7 +374,7 @@ export class RustTypeChecker {
         " > " +
         this.unparse_type(t.res) +
         ")"
-      : // t is return type
+      : // t is return, break or continue type
         this.unparse_type(t.expr);
 
   equal_types = (ts1, ts2) =>
