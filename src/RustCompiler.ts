@@ -36,8 +36,7 @@ export class RustCompiler {
   };
 
   push = (array, ...items) => {
-    for (let item of items)
-      array.push(item);
+    for (let item of items) array.push(item);
     return array;
   };
 
@@ -60,7 +59,7 @@ export class RustCompiler {
   }
 
   compile(comp: any, ce: any): void {
-    // console.log(comp.tag);
+    //console.log(comp.tag);
     this.compile_comp[comp.tag](comp, ce);
   }
 
@@ -113,7 +112,7 @@ export class RustCompiler {
       this.instrs[this.wc++] = goto_instruction;
       const alternative_address = this.wc;
       jump_on_false_instruction.addr = alternative_address;
-      this.compile(comp.alt, ce);
+      if (comp.alt != null) this.compile(comp.alt, ce);
       goto_instruction.addr = this.wc;
     },
     while: (comp, ce) => {

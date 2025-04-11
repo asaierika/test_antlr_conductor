@@ -2,7 +2,7 @@ import { TypeCheckerError } from "./error/TypeCheckerError";
 
 export class RustTypeChecker {
   head = (arr) => arr[0];
-  tail = (arr) => arr.slice(1);
+  tail = (arr) => arr.slice(1)[0];
   pair = (a, b) => [a, b];
 
   unary_arith_type = { tag: "fun", args: ["number"], res: "number" };
@@ -126,11 +126,13 @@ export class RustTypeChecker {
   annotate = (comp) => this.annotate_comp[comp.tag](comp);
 
   lookup_type = (x, e) => {
-    return !e || e.length == 0
-      ? new TypeCheckerError("unbound name: " + x)
-      : this.head(e).hasOwnProperty(x)
+    if (!e || e.length == 0) {
+      throw new TypeCheckerError("unbound name: " + x);
+    }
+    const res = this.head(e).hasOwnProperty(x)
       ? this.head(e)[x]
       : this.lookup_type(x, this.tail(e));
+    return res;
   };
 
   // to check all code path returns designated type -> assumption all parsing wraps function body in a block
@@ -176,14 +178,17 @@ export class RustTypeChecker {
             this.unparse_type(t0)
         );
       const t1 = this.type(comp.cons, te);
-      const t2 = this.type(comp.alt, te);
+      let t2 = { tag: undefined, always: false };
+      if (comp.alt) {
+        t2 = this.type(comp.alt, te);
+      }
 
       // if t1 and t2 are ret stmt, type check is done in type_comp[ret]
       if (this.RTS.length) {
         if (t1.tag !== "ret" && t2.tag !== "ret") {
           return "undefined";
         } else if (t1.tag === "ret" && t2.tag === "ret") {
-          t1.always &= t2.always;
+          t1.always = t1.always && t2.always;
           return t1;
         } else if (t1.tag === "ret") {
           t1.always = false;
@@ -240,20 +245,46 @@ export class RustTypeChecker {
             "actual type: " +
             this.unparse_type(fun_type)
         );
+      let is_equal = false;
       const expected_arg_types = fun_type.args;
       const actual_arg_types = comp.args.map((e) => this.type(e, te));
-      if (this.equal_types(actual_arg_types, expected_arg_types)) {
-        return fun_type.res;
-      } else {
-        throw new TypeCheckerError(
-          "type Error in application; " +
-            "expected argument types: " +
-            this.unparse_types(expected_arg_types) +
-            ", " +
-            "actual argument types: " +
-            this.unparse_types(actual_arg_types)
+
+      if (fun_type.args.includes("number")) {
+        console.log("has number");
+        // handles the case for unary_arith_type, binary_arith_type and number_comparison_type
+        const expected_arg_types_i32 = expected_arg_types.map((arg) =>
+          arg === "number" ? "i32" : arg
         );
+        const expected_trs_type_i32 =
+          fun_type.res === "number" ? "i32" : fun_type.res;
+
+        if (this.equal_types(actual_arg_types, expected_arg_types_i32)) {
+          return expected_trs_type_i32;
+        }
+
+        const expected_arg_types_f64 = expected_arg_types.map((arg) =>
+          arg === "number" ? "f64" : arg
+        );
+        const expected_trs_type_f64 =
+          fun_type.res === "number" ? "f64" : fun_type.res;
+
+        if (this.equal_types(actual_arg_types, expected_arg_types_f64)) {
+          return expected_trs_type_f64;
+        }
+      } else {
+        if (this.equal_types(actual_arg_types, expected_arg_types)) {
+          return fun_type.res;
+        }
       }
+
+      throw new TypeCheckerError(
+        "type Error in application; " +
+          "expected argument types: " +
+          this.unparse_types(expected_arg_types) +
+          ", " +
+          "actual argument types: " +
+          this.unparse_types(actual_arg_types)
+      );
     },
     let: (comp, te) => {
       const declared_type = comp.type;
@@ -389,6 +420,7 @@ export class RustTypeChecker {
       throw new TypeCheckerError("too many parameters in function declaration");
     const new_frame = {};
     for (let i = 0; i < xs.length; i++) new_frame[xs[i]] = ts[i];
+    console.log("extend env: " + this.pair(new_frame, e).length);
     return this.pair(new_frame, e);
   };
 
