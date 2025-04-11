@@ -14,7 +14,7 @@ export class RustCompiler {
   compile_time_environment_position = (env, x) => {
     let frame_index = env.length;
     while (this.value_index(env[--frame_index], x) === -1) {}
-    return [frame_index, this.value_index(env[frame_index], x)];
+    return [frame_index - 1, this.value_index(env[frame_index], x)];
   };
 
   value_index = (frame, x) => {

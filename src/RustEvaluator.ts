@@ -260,6 +260,26 @@ export class RustEvaluator extends BasicEvaluator {
     return new_env_addr;
   };
 
+  heap_frame_display = (address: number) => {
+    const size = this.heap_get_num_children(address);
+    console.log("Frame size: " + size);
+    for (let i = 0; i < size; i++) {
+      console.log("child " + i);
+      const value = this.heap_get_child(address, i);
+      console.log("value: " + value + " " + this.word_to_string(value));
+    }
+  };
+
+  heap_env_display = (env_address: number) => {
+    const size = this.heap_get_num_children(env_address);
+    console.log("Env frames: " + size);
+    for (let i = 0; i < size; i++) {
+      console.log("frame " + i);
+      const frame = this.heap_get_child(env_address, i);
+      this.heap_frame_display(frame);
+    }
+  };
+
   // NOTE: Number funcs
   is_number = (addr: number) => this.heap_get_tag(addr) === Tag.Number;
   heap_allocate_num = (n: number) => {
@@ -324,13 +344,19 @@ export class RustEvaluator extends BasicEvaluator {
     "!==": (x: any, y: any) => x !== y,
   };
 
-  apply_binop = (op: string, v2: any, v1: any): number =>
-    this.value_to_address(
+  apply_binop = (op: string, v2: any, v1: any): number => {
+    // console.log("v1: " + v1);
+    // console.log("v2: " + v2);
+    // console.log("op: " + op);
+    // console.log("v1 val: " + this.address_to_value(v1));
+    // console.log("v2 val: " + this.address_to_value(v2));
+    return this.value_to_address(
       this.binop_microcode[op](
         this.address_to_value(v1),
         this.address_to_value(v2)
       )
     ) as number;
+  }
   apply_unop = (op: string, v: any): number =>
     this.value_to_address(
       this.unop_microcode[op](this.address_to_value(v))
@@ -386,6 +412,7 @@ export class RustEvaluator extends BasicEvaluator {
         frame_address,
         this.heap_get_closure_env(fun)
       );
+      this.heap_env_display(this.E);
       this.PC = this.heap_get_closure_pc(fun);
     },
     TAIL_CALL: (instr: { tag: string; arity: number }) => {
