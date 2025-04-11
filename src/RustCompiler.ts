@@ -36,9 +36,8 @@ export class RustCompiler {
   };
 
   push = (array, ...items) => {
-    for (let item of items) {
+    for (let item of items)
       array.push(item);
-    }
     return array;
   };
 
