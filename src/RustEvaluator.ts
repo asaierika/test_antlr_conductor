@@ -262,19 +262,14 @@ export class RustEvaluator extends BasicEvaluator {
 
   heap_frame_display = (address: number) => {
     const size = this.heap_get_num_children(address);
-    console.log("Frame size: " + size);
     for (let i = 0; i < size; i++) {
-      console.log("child " + i);
       const value = this.heap_get_child(address, i);
-      console.log("value: " + value + " " + this.word_to_string(value));
     }
   };
 
   heap_env_display = (env_address: number) => {
     const size = this.heap_get_num_children(env_address);
-    console.log("Env frames: " + size);
     for (let i = 0; i < size; i++) {
-      console.log("frame " + i);
       const frame = this.heap_get_child(env_address, i);
       this.heap_frame_display(frame);
     }
@@ -356,7 +351,7 @@ export class RustEvaluator extends BasicEvaluator {
         this.address_to_value(v2)
       )
     ) as number;
-  }
+  };
   apply_unop = (op: string, v: any): number =>
     this.value_to_address(
       this.unop_microcode[op](this.address_to_value(v))
@@ -385,8 +380,6 @@ export class RustEvaluator extends BasicEvaluator {
       (this.E = this.heap_get_blkframe_env(this.RTS.pop())),
     LD: (instr: { tag: string; pos: [number, number] }) => {
       const val = this.heap_get_env_value(this.E, instr.pos);
-      console.log("pos: " + instr.pos);
-      console.log("val: " + val);
       // if (is_Unassigned(val)) error("access of unassigned variable");
       this.OS.push(val);
     },

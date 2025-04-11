@@ -162,6 +162,7 @@ export class ASTToJsonVisitor
     if (ctx.stmt().length == 0) {
       return {};
     }
+
     return {
       tag: "blk",
       body:

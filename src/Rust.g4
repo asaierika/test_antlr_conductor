@@ -29,7 +29,8 @@ params: param (',' param)*;
 param: ID ':' type;
 
 expr: 
-    op=('-' | '!') expr                                     # UnaryOp
+    ID '(' args? ')'                                        # Application
+    | op=('-' | '!') expr                                   # UnaryOp
     | expr op=('*' | '/' | '%') expr                        # BinaryOp
     | expr op=('+' | '-') expr                              # BinaryOp
     | expr op=('==' | '!=' | '<' | '>' | '<=' | '>=') expr  # BinaryOp
@@ -40,7 +41,6 @@ expr:
     | TRUE                                                  # BoolLiteral
     | FALSE                                                 # BoolLiteral
     | '(' expr ')'                                          # Parens
-    | ID '(' args? ')'                                      #Application
     ;
 
 args: expr (',' expr)*;
