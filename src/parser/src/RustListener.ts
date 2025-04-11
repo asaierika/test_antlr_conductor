@@ -8,7 +8,6 @@ import { StmtContext } from "./RustParser.js";
 import { Let_declContext } from "./RustParser.js";
 import { Assign_stmtContext } from "./RustParser.js";
 import { Expr_stmtContext } from "./RustParser.js";
-import { App_stmtContext } from "./RustParser.js";
 import { If_stmtContext } from "./RustParser.js";
 import { While_loopContext } from "./RustParser.js";
 import { Break_stmtContext } from "./RustParser.js";
@@ -25,6 +24,7 @@ import { FloatLiteralContext } from "./RustParser.js";
 import { ParensContext } from "./RustParser.js";
 import { LogicalOpContext } from "./RustParser.js";
 import { IntLiteralContext } from "./RustParser.js";
+import { ApplicationContext } from "./RustParser.js";
 import { BinaryOpContext } from "./RustParser.js";
 import { ArgsContext } from "./RustParser.js";
 import { TypeContext } from "./RustParser.js";
@@ -85,16 +85,6 @@ export class RustListener implements ParseTreeListener {
      * @param ctx the parse tree
      */
     exitExpr_stmt?: (ctx: Expr_stmtContext) => void;
-    /**
-     * Enter a parse tree produced by `RustParser.app_stmt`.
-     * @param ctx the parse tree
-     */
-    enterApp_stmt?: (ctx: App_stmtContext) => void;
-    /**
-     * Exit a parse tree produced by `RustParser.app_stmt`.
-     * @param ctx the parse tree
-     */
-    exitApp_stmt?: (ctx: App_stmtContext) => void;
     /**
      * Enter a parse tree produced by `RustParser.if_stmt`.
      * @param ctx the parse tree
@@ -269,6 +259,18 @@ export class RustListener implements ParseTreeListener {
      * @param ctx the parse tree
      */
     exitIntLiteral?: (ctx: IntLiteralContext) => void;
+    /**
+     * Enter a parse tree produced by the `Application`
+     * labeled alternative in `RustParser.expr`.
+     * @param ctx the parse tree
+     */
+    enterApplication?: (ctx: ApplicationContext) => void;
+    /**
+     * Exit a parse tree produced by the `Application`
+     * labeled alternative in `RustParser.expr`.
+     * @param ctx the parse tree
+     */
+    exitApplication?: (ctx: ApplicationContext) => void;
     /**
      * Enter a parse tree produced by the `BinaryOp`
      * labeled alternative in `RustParser.expr`.

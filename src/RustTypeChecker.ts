@@ -250,7 +250,6 @@ export class RustTypeChecker {
       const actual_arg_types = comp.args.map((e) => this.type(e, te));
 
       if (fun_type.args.includes("number")) {
-        console.log("has number");
         // handles the case for unary_arith_type, binary_arith_type and number_comparison_type
         const expected_arg_types_i32 = expected_arg_types.map((arg) =>
           arg === "number" ? "i32" : arg
@@ -420,7 +419,6 @@ export class RustTypeChecker {
       throw new TypeCheckerError("too many parameters in function declaration");
     const new_frame = {};
     for (let i = 0; i < xs.length; i++) new_frame[xs[i]] = ts[i];
-    console.log("extend env: " + this.pair(new_frame, e).length);
     return this.pair(new_frame, e);
   };
 

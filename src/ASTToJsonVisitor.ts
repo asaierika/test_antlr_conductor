@@ -25,7 +25,7 @@ import {
   Return_stmtContext,
   LogicalOpContext,
   Expr_stmtContext,
-  App_stmtContext,
+  ApplicationContext,
   ArgsContext,
 } from "./parser/src/RustParser";
 
@@ -143,7 +143,7 @@ export class ASTToJsonVisitor
     return { tag: "continue" };
   }
 
-  visitApp_stmt(ctx: App_stmtContext): any {
+  visitApplication(ctx: ApplicationContext): any {
     return {
       tag: "app",
       fun: {

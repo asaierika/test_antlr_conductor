@@ -359,6 +359,8 @@ export class RustEvaluator extends BasicEvaluator {
       (this.E = this.heap_get_blkframe_env(this.RTS.pop())),
     LD: (instr: { tag: string; pos: [number, number] }) => {
       const val = this.heap_get_env_value(this.E, instr.pos);
+      console.log("pos: " + instr.pos);
+      console.log("val: " + val);
       // if (is_Unassigned(val)) error("access of unassigned variable");
       this.OS.push(val);
     },

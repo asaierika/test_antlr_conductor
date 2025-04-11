@@ -6,7 +6,6 @@ prog: stmt* EOF;
 stmt: let_decl 
     | assign_stmt
     | expr_stmt
-    | app_stmt
     | break_stmt   
     | continue_stmt  
     | while_loop
@@ -18,7 +17,6 @@ stmt: let_decl
 let_decl: 'let' ID ':' type '=' expr ';'?;
 assign_stmt: ID '=' expr ';'?;
 expr_stmt: expr ';'?;
-app_stmt: ID '(' args? ')' ';'?;
 if_stmt: 'if' expr block ('else' (block | if_stmt))?  ';'?;
 while_loop: 'while' expr block ';'?;
 break_stmt: 'break' ';'?;      
@@ -42,6 +40,7 @@ expr:
     | TRUE                                                  # BoolLiteral
     | FALSE                                                 # BoolLiteral
     | '(' expr ')'                                          # Parens
+    | ID '(' args? ')'                                      #Application
     ;
 
 args: expr (',' expr)*;
