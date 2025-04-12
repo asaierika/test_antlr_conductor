@@ -27,11 +27,15 @@ import {
   Expr_stmtContext,
   ApplicationContext,
   ArgsContext,
+  Struct_defContext,
+  Struct_fieldContext,
+  StructInitContext,
+  TypeContext,
 } from "./parser/src/RustParser";
 
 interface FunctionParameter {
   name: string;
-  type: string; // 'i32' | 'bool' | 'f64'
+  type: string; // 'i32' | 'bool' | 'f64' | ID
 }
 
 export class ASTToJsonVisitor
@@ -190,7 +194,7 @@ export class ASTToJsonVisitor
         args: ctx.params()
           ? this.visitParams(ctx.params()).map((prm) => prm.type)
           : [],
-        res: ctx.type().getText() == "" ? "undefined" : ctx.type().getText(),
+        res: ctx.type().getText() == "" ? "undefined" : this.visit(ctx.type()),
       },
     };
   }
@@ -199,9 +203,16 @@ export class ASTToJsonVisitor
     return {
       tag: "let",
       sym: ctx.ID().getText(),
-      type: ctx.type().getText(),
+      type: this.visit(ctx.type()),
       expr: this.visit(ctx.expr()),
     };
+  }
+
+  visitType(ctx: TypeContext): any {
+    if (ctx.ID() != null) {
+      return { tag: "nam", sym: ctx.ID().getText() };
+    }
+    return ctx.getText();
   }
 
   visitAssign_stmt(ctx: Assign_stmtContext): any {
@@ -219,11 +230,39 @@ export class ASTToJsonVisitor
   visitParam(ctx: ParamContext): FunctionParameter {
     return {
       name: ctx.ID().getText(),
-      type: ctx.type().getText(),
+      type: this.visit(ctx.type()),
     };
   }
 
   visitExpr_stmt(ctx: Expr_stmtContext): any {
     return this.visit(ctx.expr());
+  }
+
+  visitStruct_def(ctx: Struct_defContext): any {
+    return {
+      tag: "struct",
+      sym: ctx.ID().getText(),
+      type: {
+        tag: "struct",
+        fields: ctx.struct_field()
+          ? ctx.struct_field().map((field) => this.visit(field))
+          : [],
+      },
+    };
+  }
+
+  visitStruct_field(ctx: Struct_fieldContext): any {
+    return {
+      name: ctx.ID().getText(),
+      type: this.visit(ctx.type()),
+    };
+  }
+
+  visitStructInit(ctx: StructInitContext): any {
+    return {
+      tag: "struct_init",
+      sym: ctx.ID().getText(),
+      args: ctx.args() ? this.visitArgs(ctx.args()) : [],
+    };
   }
 }

@@ -17,6 +17,9 @@ import { BlockContext } from "./RustParser.js";
 import { Func_defContext } from "./RustParser.js";
 import { ParamsContext } from "./RustParser.js";
 import { ParamContext } from "./RustParser.js";
+import { Struct_defContext } from "./RustParser.js";
+import { Struct_fieldContext } from "./RustParser.js";
+import { StructInitContext } from "./RustParser.js";
 import { UnaryOpContext } from "./RustParser.js";
 import { VariableContext } from "./RustParser.js";
 import { BoolLiteralContext } from "./RustParser.js";
@@ -122,6 +125,25 @@ export class RustVisitor<Result> extends AbstractParseTreeVisitor<Result> {
      * @return the visitor result
      */
     visitParam?: (ctx: ParamContext) => Result;
+    /**
+     * Visit a parse tree produced by `RustParser.struct_def`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitStruct_def?: (ctx: Struct_defContext) => Result;
+    /**
+     * Visit a parse tree produced by `RustParser.struct_field`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitStruct_field?: (ctx: Struct_fieldContext) => Result;
+    /**
+     * Visit a parse tree produced by the `StructInit`
+     * labeled alternative in `RustParser.expr`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitStructInit?: (ctx: StructInitContext) => Result;
     /**
      * Visit a parse tree produced by the `UnaryOp`
      * labeled alternative in `RustParser.expr`.

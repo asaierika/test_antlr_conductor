@@ -17,6 +17,9 @@ import { BlockContext } from "./RustParser.js";
 import { Func_defContext } from "./RustParser.js";
 import { ParamsContext } from "./RustParser.js";
 import { ParamContext } from "./RustParser.js";
+import { Struct_defContext } from "./RustParser.js";
+import { Struct_fieldContext } from "./RustParser.js";
+import { StructInitContext } from "./RustParser.js";
 import { UnaryOpContext } from "./RustParser.js";
 import { VariableContext } from "./RustParser.js";
 import { BoolLiteralContext } from "./RustParser.js";
@@ -175,6 +178,38 @@ export class RustListener implements ParseTreeListener {
      * @param ctx the parse tree
      */
     exitParam?: (ctx: ParamContext) => void;
+    /**
+     * Enter a parse tree produced by `RustParser.struct_def`.
+     * @param ctx the parse tree
+     */
+    enterStruct_def?: (ctx: Struct_defContext) => void;
+    /**
+     * Exit a parse tree produced by `RustParser.struct_def`.
+     * @param ctx the parse tree
+     */
+    exitStruct_def?: (ctx: Struct_defContext) => void;
+    /**
+     * Enter a parse tree produced by `RustParser.struct_field`.
+     * @param ctx the parse tree
+     */
+    enterStruct_field?: (ctx: Struct_fieldContext) => void;
+    /**
+     * Exit a parse tree produced by `RustParser.struct_field`.
+     * @param ctx the parse tree
+     */
+    exitStruct_field?: (ctx: Struct_fieldContext) => void;
+    /**
+     * Enter a parse tree produced by the `StructInit`
+     * labeled alternative in `RustParser.expr`.
+     * @param ctx the parse tree
+     */
+    enterStructInit?: (ctx: StructInitContext) => void;
+    /**
+     * Exit a parse tree produced by the `StructInit`
+     * labeled alternative in `RustParser.expr`.
+     * @param ctx the parse tree
+     */
+    exitStructInit?: (ctx: StructInitContext) => void;
     /**
      * Enter a parse tree produced by the `UnaryOp`
      * labeled alternative in `RustParser.expr`.
