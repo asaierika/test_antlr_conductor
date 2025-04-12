@@ -1,8 +1,12 @@
 type Goto_instruction = { tag: string; addr: number };
 
+type compile_comp = {tag: string, [key: string]: any};
+type compiled_comp = compile_comp;
+export type primitive = boolean | number;
+
 export class RustCompiler {
   private wc: number = 0;
-  private instrs: any[] = [];
+  private instrs: compiled_comp[] = [];
 
   private primitive_object = {};
   global_compile_frame = Object.keys(this.primitive_object);
@@ -11,36 +15,31 @@ export class RustCompiler {
   break_map: Map<number, Goto_instruction[]> = new Map(); // maps the current while loop start addr to the break instructions inside
   continue_map: Map<number, Goto_instruction[]> = new Map(); // maps the current while loop start addr to the continue instructions inside
   blk_map: Map<number, number> = new Map(); // maps the current while loop start addr to the number of blocks until the break/continue
-  compile_time_environment_position = (env, x) => {
+  compile_time_environment_position = (env: string[][], x: string) => {
     let frame_index = env.length;
     while (this.value_index(env[--frame_index], x) === -1) {}
     return [frame_index - 1, this.value_index(env[frame_index], x)];
   };
 
-  value_index = (frame, x) => {
-    for (let i = 0; i < frame.length; i++) {
+  value_index = (frame: string[], x: string) => {
+    for (let i = 0; i < frame.length; i++)
       if (frame[i] === x) return i;
-    }
     return -1;
   };
 
-  scan = (comp) =>
+  scan = (comp: compile_comp) =>
     comp.tag === "seq"
       ? comp.stmts.reduce((acc, x) => acc.concat(this.scan(x)), [])
       : ["let", "const", "fun"].includes(comp.tag)
       ? [comp.sym]
       : [];
 
-  compile_time_environment_extend = (vs, e) => {
-    return this.push([...e], vs);
-  };
+  compile_time_environment_extend = (vs: string[], e: string[][]) => {
+    e.push(vs);
+    return e;
+  }
 
-  push = (array, ...items) => {
-    for (let item of items) array.push(item);
-    return array;
-  };
-
-  compile_sequence = (seq, ce) => {
+  compile_sequence = (seq: compile_comp[], ce: string[][]) => {
     if (seq.length === 0)
       return (this.instrs[this.wc++] = { tag: "LDC", val: undefined });
     let frst = true;
@@ -50,7 +49,7 @@ export class RustCompiler {
     }
   };
 
-  compile_program(program): any[] {
+  compile_program(program: compile_comp): compiled_comp[] {
     this.wc = 0;
     this.instrs = [];
     this.compile(program, this.global_compile_environment);
@@ -64,28 +63,28 @@ export class RustCompiler {
   }
 
   compile_comp = {
-    lit: (comp, ce) => {
+    lit: (comp: {val: primitive}, ce: string[][]) => {
       this.instrs[this.wc++] = { tag: "LDC", val: comp.val };
     },
     nam:
       // store precomputed position information in LD instruction
-      (comp, ce) => {
+      (comp: {sym: string}, ce: string[][]) => {
         this.instrs[this.wc++] = {
           tag: "LD",
           sym: comp.sym,
           pos: this.compile_time_environment_position(ce, comp.sym),
         };
       },
-    unop: (comp, ce) => {
+    unop: (comp: {sym: string, frst: compile_comp}, ce: string[][]) => {
       this.compile(comp.frst, ce);
       this.instrs[this.wc++] = { tag: "UNOP", sym: comp.sym };
     },
-    binop: (comp, ce) => {
+    binop: (comp: {frst: compile_comp, scnd: compile_comp, sym: string}, ce: string[][]) => {
       this.compile(comp.frst, ce);
       this.compile(comp.scnd, ce);
       this.instrs[this.wc++] = { tag: "BINOP", sym: comp.sym };
     },
-    log: (comp, ce) => {
+    log: (comp: {sym: string, frst: compile_comp, scnd: compile_comp}, ce: string[][]) => {
       this.compile(
         comp.sym == "&&"
           ? {
@@ -103,7 +102,7 @@ export class RustCompiler {
         ce
       );
     },
-    cond: (comp, ce) => {
+    cond: (comp: {pred: compile_comp, cons: compile_comp, alt: compile_comp}, ce: string[][]) => {
       this.compile(comp.pred, ce);
       const jump_on_false_instruction = { tag: "JOF", addr: undefined };
       this.instrs[this.wc++] = jump_on_false_instruction;
@@ -115,7 +114,7 @@ export class RustCompiler {
       if (comp.alt != null) this.compile(comp.alt, ce);
       goto_instruction.addr = this.wc;
     },
-    while: (comp, ce) => {
+    while: (comp: {pred: compile_comp, body: compile_comp}, ce: string[][]) => {
       this.blk_map.set(this.wc, 0);
       this.while_instrs.push(this.wc);
       const loop_start = this.wc;
@@ -149,7 +148,7 @@ export class RustCompiler {
       this.while_instrs.pop();
       this.blk_map.delete(this.wc);
     },
-    app: (comp, ce) => {
+    app: (comp: {fun: compile_comp, args: compile_comp[]}, ce: string[][]) => {
       this.compile(comp.fun, ce);
       for (let arg of comp.args) {
         this.compile(arg, ce);
@@ -158,14 +157,14 @@ export class RustCompiler {
     },
     assmt:
       // store precomputed position info in ASSIGN instruction
-      (comp, ce) => {
+      (comp: {expr: compile_comp, sym: string}, ce: string[][]) => {
         this.compile(comp.expr, ce);
         this.instrs[this.wc++] = {
           tag: "ASSIGN",
           pos: this.compile_time_environment_position(ce, comp.sym),
         };
       },
-    lam: (comp, ce) => {
+    lam: (comp: {tag: string, arity: number, prms: string[], body: compile_comp}, ce: string[][]) => {
       this.instrs[this.wc++] = {
         tag: "LDF",
         arity: comp.arity,
@@ -183,11 +182,11 @@ export class RustCompiler {
       this.instrs[this.wc++] = { tag: "RESET" };
       goto_instruction.addr = this.wc;
     },
-    seq: (comp, ce) => this.compile_sequence(comp.stmts, ce),
-    blk: (comp, ce) => {
-      for (const key of this.blk_map.keys()) {
+    seq: (comp: {stmts: compile_comp[]}, ce: string[][]) => this.compile_sequence(comp.stmts, ce),
+    blk: (comp: {body: compile_comp}, ce: string[][]) => {
+      for (const key of this.blk_map.keys())
         this.blk_map.set(key, this.blk_map.get(key) + 1);
-      }
+  
       const locals = this.scan(comp.body);
       this.instrs[this.wc++] = { tag: "ENTER_SCOPE", num: locals.length };
       this.compile(comp.body, this.compile_time_environment_extend(locals, ce));
@@ -196,21 +195,21 @@ export class RustCompiler {
         this.blk_map.set(key, this.blk_map.get(key) - 1);
       }
     },
-    let: (comp, ce) => {
+    let: (comp: {expr: compile_comp, sym: string}, ce: string[][]) => {
       this.compile(comp.expr, ce);
       this.instrs[this.wc++] = {
         tag: "ASSIGN",
         pos: this.compile_time_environment_position(ce, comp.sym),
       };
     },
-    const: (comp, ce) => {
+    const: (comp: {expr: compile_comp, sym: string}, ce: string[][]) => {
       this.compile(comp.expr, ce);
       this.instrs[this.wc++] = {
         tag: "ASSIGN",
         pos: this.compile_time_environment_position(ce, comp.sym),
       };
     },
-    ret: (comp, ce) => {
+    ret: (comp: {expr: compile_comp}, ce: string[][]) => {
       this.compile(comp.expr, ce);
       if (comp.expr.tag === "app") {
         // tail call: turn CALL into TAILCALL
@@ -219,7 +218,7 @@ export class RustCompiler {
         this.instrs[this.wc++] = { tag: "RESET" };
       }
     },
-    fun: (comp, ce) => {
+    fun: (comp: {sym: string, body: compile_comp, prms: {name: string}[]}, ce: string[][]) => {
       this.compile(
         {
           tag: "const",
@@ -234,7 +233,7 @@ export class RustCompiler {
         ce
       );
     },
-    break: (comp, ce) => {
+    break: (comp: compile_comp, ce: string[][]) => {
       const goto_instruction = { tag: "GOTO", addr: undefined };
       const curr_wihle = this.while_instrs[this.while_instrs.length - 1];
       if (!this.break_map.has(curr_wihle)) {
@@ -251,7 +250,7 @@ export class RustCompiler {
       this.instrs[this.wc++] = { tag: "POP" };
       this.instrs[this.wc++] = goto_instruction;
     },
-    continue: (comp, ce) => {
+    continue: (comp: compile_comp, ce: string[][]) => {
       const goto_instruction = { tag: "GOTO", addr: undefined };
       const curr_wihle = this.while_instrs[this.while_instrs.length - 1];
       if (!this.continue_map.has(curr_wihle)) {

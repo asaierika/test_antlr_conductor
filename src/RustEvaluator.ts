@@ -4,11 +4,9 @@ import { CharStream, CommonTokenStream } from "antlr4ng";
 import { RustLexer } from "./parser/src/RustLexer";
 import { RustParser } from "./parser/src/RustParser";
 import { ASTToJsonVisitor } from "./ASTToJsonVisitor";
-import { RustCompiler } from "./RustCompiler";
+import { RustCompiler, primitive } from "./RustCompiler";
 import { RustTypeChecker } from "./RustTypeChecker";
 import { TypeCheckerError } from "./error/TypeCheckerError";
-
-type primitive = boolean | number | string | null;
 
 const word_size = 8;
 const heap_size = 2 ** 20;
