@@ -43,17 +43,19 @@ export class RustParser extends antlr.Parser {
     public static readonly T__28 = 29;
     public static readonly T__29 = 30;
     public static readonly T__30 = 31;
-    public static readonly TRUE = 32;
-    public static readonly FALSE = 33;
-    public static readonly BREAK = 34;
-    public static readonly CONTINUE = 35;
-    public static readonly RETURN = 36;
-    public static readonly FN = 37;
-    public static readonly WS = 38;
-    public static readonly COMMENT = 39;
-    public static readonly ID = 40;
-    public static readonly INT = 41;
-    public static readonly FLOAT = 42;
+    public static readonly T__31 = 32;
+    public static readonly T__32 = 33;
+    public static readonly TRUE = 34;
+    public static readonly FALSE = 35;
+    public static readonly BREAK = 36;
+    public static readonly CONTINUE = 37;
+    public static readonly RETURN = 38;
+    public static readonly FN = 39;
+    public static readonly WS = 40;
+    public static readonly COMMENT = 41;
+    public static readonly ID = 42;
+    public static readonly INT = 43;
+    public static readonly FLOAT = 44;
     public static readonly RULE_prog = 0;
     public static readonly RULE_stmt = 1;
     public static readonly RULE_let_decl = 2;
@@ -77,17 +79,17 @@ export class RustParser extends antlr.Parser {
     public static readonly literalNames = [
         null, "'let'", "':'", "'='", "';'", "'if'", "'else'", "'while'", 
         "'{'", "'}'", "'('", "')'", "'->'", "','", "'struct'", "'-'", "'!'", 
-        "'*'", "'/'", "'%'", "'+'", "'=='", "'!='", "'<'", "'>'", "'<='", 
-        "'>='", "'&&'", "'||'", "'i32'", "'bool'", "'f64'", "'true'", "'false'", 
-        "'break'", "'continue'", "'return'", "'fn'"
+        "'&'", "'&mut'", "'*'", "'/'", "'%'", "'+'", "'=='", "'!='", "'<'", 
+        "'>'", "'<='", "'>='", "'&&'", "'||'", "'i32'", "'bool'", "'f64'", 
+        "'true'", "'false'", "'break'", "'continue'", "'return'", "'fn'"
     ];
 
     public static readonly symbolicNames = [
         null, null, null, null, null, null, null, null, null, null, null, 
         null, null, null, null, null, null, null, null, null, null, null, 
-        null, null, null, null, null, null, null, null, null, null, "TRUE", 
-        "FALSE", "BREAK", "CONTINUE", "RETURN", "FN", "WS", "COMMENT", "ID", 
-        "INT", "FLOAT"
+        null, null, null, null, null, null, null, null, null, null, null, 
+        null, "TRUE", "FALSE", "BREAK", "CONTINUE", "RETURN", "FN", "WS", 
+        "COMMENT", "ID", "INT", "FLOAT"
     ];
     public static readonly ruleNames = [
         "prog", "stmt", "let_decl", "assign_stmt", "expr_stmt", "if_stmt", 
@@ -120,7 +122,7 @@ export class RustParser extends antlr.Parser {
             this.state = 41;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
-            while ((((_la) & ~0x1F) === 0 && ((1 << _la) & 116130) !== 0) || ((((_la - 32)) & ~0x1F) === 0 && ((1 << (_la - 32)) & 1855) !== 0)) {
+            while ((((_la) & ~0x1F) === 0 && ((1 << _la) & 509346) !== 0) || ((((_la - 34)) & ~0x1F) === 0 && ((1 << (_la - 34)) & 1855) !== 0)) {
                 {
                 {
                 this.state = 38;
@@ -591,7 +593,7 @@ export class RustParser extends antlr.Parser {
             this.state = 116;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
-            while ((((_la) & ~0x1F) === 0 && ((1 << _la) & 116130) !== 0) || ((((_la - 32)) & ~0x1F) === 0 && ((1 << (_la - 32)) & 1855) !== 0)) {
+            while ((((_la) & ~0x1F) === 0 && ((1 << _la) & 509346) !== 0) || ((((_la - 34)) & ~0x1F) === 0 && ((1 << (_la - 34)) & 1855) !== 0)) {
                 {
                 {
                 this.state = 113;
@@ -645,7 +647,7 @@ export class RustParser extends antlr.Parser {
             this.state = 127;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
-            if (_la === 40) {
+            if (_la === 42) {
                 {
                 this.state = 126;
                 this.params();
@@ -870,7 +872,7 @@ export class RustParser extends antlr.Parser {
                 this.state = 171;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if ((((_la) & ~0x1F) === 0 && ((1 << _la) & 99328) !== 0) || ((((_la - 32)) & ~0x1F) === 0 && ((1 << (_la - 32)) & 1795) !== 0)) {
+                if ((((_la) & ~0x1F) === 0 && ((1 << _la) & 492544) !== 0) || ((((_la - 34)) & ~0x1F) === 0 && ((1 << (_la - 34)) & 1795) !== 0)) {
                     {
                     this.state = 170;
                     this.args();
@@ -893,7 +895,7 @@ export class RustParser extends antlr.Parser {
                 this.state = 177;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if ((((_la) & ~0x1F) === 0 && ((1 << _la) & 99328) !== 0) || ((((_la - 32)) & ~0x1F) === 0 && ((1 << (_la - 32)) & 1795) !== 0)) {
+                if ((((_la) & ~0x1F) === 0 && ((1 << _la) & 492544) !== 0) || ((((_la - 34)) & ~0x1F) === 0 && ((1 << (_la - 34)) & 1795) !== 0)) {
                     {
                     this.state = 176;
                     this.args();
@@ -912,7 +914,7 @@ export class RustParser extends antlr.Parser {
                 this.state = 180;
                 (localContext as UnaryOpContext)._op = this.tokenStream.LT(1);
                 _la = this.tokenStream.LA(1);
-                if(!(_la === 15 || _la === 16)) {
+                if(!((((_la) & ~0x1F) === 0 && ((1 << _la) & 491520) !== 0))) {
                     (localContext as UnaryOpContext)._op = this.errorHandler.recoverInline(this);
                 }
                 else {
@@ -1007,7 +1009,7 @@ export class RustParser extends antlr.Parser {
                         this.state = 194;
                         (localContext as BinaryOpContext)._op = this.tokenStream.LT(1);
                         _la = this.tokenStream.LA(1);
-                        if(!((((_la) & ~0x1F) === 0 && ((1 << _la) & 917504) !== 0))) {
+                        if(!((((_la) & ~0x1F) === 0 && ((1 << _la) & 3670016) !== 0))) {
                             (localContext as BinaryOpContext)._op = this.errorHandler.recoverInline(this);
                         }
                         else {
@@ -1029,7 +1031,7 @@ export class RustParser extends antlr.Parser {
                         this.state = 197;
                         (localContext as BinaryOpContext)._op = this.tokenStream.LT(1);
                         _la = this.tokenStream.LA(1);
-                        if(!(_la === 15 || _la === 20)) {
+                        if(!(_la === 15 || _la === 22)) {
                             (localContext as BinaryOpContext)._op = this.errorHandler.recoverInline(this);
                         }
                         else {
@@ -1051,7 +1053,7 @@ export class RustParser extends antlr.Parser {
                         this.state = 200;
                         (localContext as BinaryOpContext)._op = this.tokenStream.LT(1);
                         _la = this.tokenStream.LA(1);
-                        if(!((((_la) & ~0x1F) === 0 && ((1 << _la) & 132120576) !== 0))) {
+                        if(!((((_la) & ~0x1F) === 0 && ((1 << _la) & 528482304) !== 0))) {
                             (localContext as BinaryOpContext)._op = this.errorHandler.recoverInline(this);
                         }
                         else {
@@ -1073,7 +1075,7 @@ export class RustParser extends antlr.Parser {
                         this.state = 203;
                         (localContext as LogicalOpContext)._op = this.tokenStream.LT(1);
                         _la = this.tokenStream.LA(1);
-                        if(!(_la === 27 || _la === 28)) {
+                        if(!(_la === 29 || _la === 30)) {
                             (localContext as LogicalOpContext)._op = this.errorHandler.recoverInline(this);
                         }
                         else {
@@ -1155,7 +1157,7 @@ export class RustParser extends antlr.Parser {
             {
             this.state = 218;
             _la = this.tokenStream.LA(1);
-            if(!(((((_la - 29)) & ~0x1F) === 0 && ((1 << (_la - 29)) & 2055) !== 0))) {
+            if(!(((((_la - 31)) & ~0x1F) === 0 && ((1 << (_la - 31)) & 2055) !== 0))) {
             this.errorHandler.recoverInline(this);
             }
             else {
@@ -1200,7 +1202,7 @@ export class RustParser extends antlr.Parser {
     }
 
     public static readonly _serializedATN: number[] = [
-        4,1,42,221,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,7,
+        4,1,44,221,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,7,
         6,2,7,7,7,2,8,7,8,2,9,7,9,2,10,7,10,2,11,7,11,2,12,7,12,2,13,7,13,
         2,14,7,14,2,15,7,15,2,16,7,16,2,17,7,17,2,18,7,18,1,0,5,0,40,8,0,
         10,0,12,0,43,9,0,1,0,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
@@ -1218,8 +1220,8 @@ export class RustParser extends antlr.Parser {
         1,16,3,16,192,8,16,1,16,1,16,1,16,1,16,1,16,1,16,1,16,1,16,1,16,
         1,16,1,16,1,16,5,16,206,8,16,10,16,12,16,209,9,16,1,17,1,17,1,17,
         5,17,214,8,17,10,17,12,17,217,9,17,1,18,1,18,1,18,0,1,32,19,0,2,
-        4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,36,0,6,1,0,15,16,1,
-        0,17,19,2,0,15,15,20,20,1,0,21,26,1,0,27,28,2,0,29,31,40,40,245,
+        4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,36,0,6,1,0,15,18,1,
+        0,19,21,2,0,15,15,22,22,1,0,23,28,1,0,29,30,2,0,31,33,42,42,245,
         0,41,1,0,0,0,2,57,1,0,0,0,4,59,1,0,0,0,6,68,1,0,0,0,8,74,1,0,0,0,
         10,78,1,0,0,0,12,91,1,0,0,0,14,97,1,0,0,0,16,101,1,0,0,0,18,105,
         1,0,0,0,20,112,1,0,0,0,22,123,1,0,0,0,24,136,1,0,0,0,26,144,1,0,
@@ -1231,9 +1233,9 @@ export class RustParser extends antlr.Parser {
         58,3,20,10,0,55,58,3,22,11,0,56,58,3,28,14,0,57,46,1,0,0,0,57,47,
         1,0,0,0,57,48,1,0,0,0,57,49,1,0,0,0,57,50,1,0,0,0,57,51,1,0,0,0,
         57,52,1,0,0,0,57,53,1,0,0,0,57,54,1,0,0,0,57,55,1,0,0,0,57,56,1,
-        0,0,0,58,3,1,0,0,0,59,60,5,1,0,0,60,61,5,40,0,0,61,62,5,2,0,0,62,
+        0,0,0,58,3,1,0,0,0,59,60,5,1,0,0,60,61,5,42,0,0,61,62,5,2,0,0,62,
         63,3,36,18,0,63,64,5,3,0,0,64,66,3,32,16,0,65,67,5,4,0,0,66,65,1,
-        0,0,0,66,67,1,0,0,0,67,5,1,0,0,0,68,69,5,40,0,0,69,70,5,3,0,0,70,
+        0,0,0,66,67,1,0,0,0,67,5,1,0,0,0,68,69,5,42,0,0,69,70,5,3,0,0,70,
         72,3,32,16,0,71,73,5,4,0,0,72,71,1,0,0,0,72,73,1,0,0,0,73,7,1,0,
         0,0,74,76,3,32,16,0,75,77,5,4,0,0,76,75,1,0,0,0,76,77,1,0,0,0,77,
         9,1,0,0,0,78,79,5,5,0,0,79,80,3,32,16,0,80,86,3,20,10,0,81,84,5,
@@ -1241,33 +1243,33 @@ export class RustParser extends antlr.Parser {
         85,87,1,0,0,0,86,81,1,0,0,0,86,87,1,0,0,0,87,89,1,0,0,0,88,90,5,
         4,0,0,89,88,1,0,0,0,89,90,1,0,0,0,90,11,1,0,0,0,91,92,5,7,0,0,92,
         93,3,32,16,0,93,95,3,20,10,0,94,96,5,4,0,0,95,94,1,0,0,0,95,96,1,
-        0,0,0,96,13,1,0,0,0,97,99,5,34,0,0,98,100,5,4,0,0,99,98,1,0,0,0,
-        99,100,1,0,0,0,100,15,1,0,0,0,101,103,5,35,0,0,102,104,5,4,0,0,103,
-        102,1,0,0,0,103,104,1,0,0,0,104,17,1,0,0,0,105,107,5,36,0,0,106,
+        0,0,0,96,13,1,0,0,0,97,99,5,36,0,0,98,100,5,4,0,0,99,98,1,0,0,0,
+        99,100,1,0,0,0,100,15,1,0,0,0,101,103,5,37,0,0,102,104,5,4,0,0,103,
+        102,1,0,0,0,103,104,1,0,0,0,104,17,1,0,0,0,105,107,5,38,0,0,106,
         108,3,32,16,0,107,106,1,0,0,0,107,108,1,0,0,0,108,110,1,0,0,0,109,
         111,5,4,0,0,110,109,1,0,0,0,110,111,1,0,0,0,111,19,1,0,0,0,112,116,
         5,8,0,0,113,115,3,2,1,0,114,113,1,0,0,0,115,118,1,0,0,0,116,114,
         1,0,0,0,116,117,1,0,0,0,117,119,1,0,0,0,118,116,1,0,0,0,119,121,
         5,9,0,0,120,122,5,4,0,0,121,120,1,0,0,0,121,122,1,0,0,0,122,21,1,
-        0,0,0,123,124,5,37,0,0,124,125,5,40,0,0,125,127,5,10,0,0,126,128,
+        0,0,0,123,124,5,39,0,0,124,125,5,42,0,0,125,127,5,10,0,0,126,128,
         3,24,12,0,127,126,1,0,0,0,127,128,1,0,0,0,128,129,1,0,0,0,129,132,
         5,11,0,0,130,131,5,12,0,0,131,133,3,36,18,0,132,130,1,0,0,0,132,
         133,1,0,0,0,133,134,1,0,0,0,134,135,3,20,10,0,135,23,1,0,0,0,136,
         141,3,26,13,0,137,138,5,13,0,0,138,140,3,26,13,0,139,137,1,0,0,0,
         140,143,1,0,0,0,141,139,1,0,0,0,141,142,1,0,0,0,142,25,1,0,0,0,143,
-        141,1,0,0,0,144,145,5,40,0,0,145,146,5,2,0,0,146,147,3,36,18,0,147,
-        27,1,0,0,0,148,149,5,14,0,0,149,150,5,40,0,0,150,151,5,8,0,0,151,
+        141,1,0,0,0,144,145,5,42,0,0,145,146,5,2,0,0,146,147,3,36,18,0,147,
+        27,1,0,0,0,148,149,5,14,0,0,149,150,5,42,0,0,150,151,5,8,0,0,151,
         156,3,30,15,0,152,153,5,13,0,0,153,155,3,30,15,0,154,152,1,0,0,0,
         155,158,1,0,0,0,156,154,1,0,0,0,156,157,1,0,0,0,157,159,1,0,0,0,
         158,156,1,0,0,0,159,161,5,9,0,0,160,162,5,4,0,0,161,160,1,0,0,0,
-        161,162,1,0,0,0,162,29,1,0,0,0,163,164,5,40,0,0,164,165,5,2,0,0,
-        165,166,3,36,18,0,166,31,1,0,0,0,167,168,6,16,-1,0,168,169,5,40,
+        161,162,1,0,0,0,162,29,1,0,0,0,163,164,5,42,0,0,164,165,5,2,0,0,
+        165,166,3,36,18,0,166,31,1,0,0,0,167,168,6,16,-1,0,168,169,5,42,
         0,0,169,171,5,10,0,0,170,172,3,34,17,0,171,170,1,0,0,0,171,172,1,
-        0,0,0,172,173,1,0,0,0,173,192,5,11,0,0,174,175,5,40,0,0,175,177,
+        0,0,0,172,173,1,0,0,0,173,192,5,11,0,0,174,175,5,42,0,0,175,177,
         5,8,0,0,176,178,3,34,17,0,177,176,1,0,0,0,177,178,1,0,0,0,178,179,
         1,0,0,0,179,192,5,9,0,0,180,181,7,0,0,0,181,192,3,32,16,11,182,192,
-        5,40,0,0,183,192,5,41,0,0,184,192,5,42,0,0,185,192,5,32,0,0,186,
-        192,5,33,0,0,187,188,5,10,0,0,188,189,3,32,16,0,189,190,5,11,0,0,
+        5,42,0,0,183,192,5,43,0,0,184,192,5,44,0,0,185,192,5,34,0,0,186,
+        192,5,35,0,0,187,188,5,10,0,0,188,189,3,32,16,0,189,190,5,11,0,0,
         190,192,1,0,0,0,191,167,1,0,0,0,191,174,1,0,0,0,191,180,1,0,0,0,
         191,182,1,0,0,0,191,183,1,0,0,0,191,184,1,0,0,0,191,185,1,0,0,0,
         191,186,1,0,0,0,191,187,1,0,0,0,192,207,1,0,0,0,193,194,10,10,0,

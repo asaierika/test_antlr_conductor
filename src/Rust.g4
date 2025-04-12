@@ -35,7 +35,7 @@ struct_field: ID ':' type;
 expr: 
     ID '(' args? ')'                                        # Application
     | ID '{' args? '}'                                      # StructInit
-    | op=('-' | '!') expr                                   # UnaryOp
+    | op=('-' | '!' | '&' | '&mut') expr                    # UnaryOp
     | expr op=('*' | '/' | '%') expr                        # BinaryOp
     | expr op=('+' | '-') expr                              # BinaryOp
     | expr op=('==' | '!=' | '<' | '>' | '<=' | '>=') expr  # BinaryOp
