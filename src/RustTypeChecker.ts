@@ -121,6 +121,16 @@ export class RustTypeChecker {
       sym: comp.sym,
       expr: this.annotate(comp.expr),
     }),
+    struct: (comp) => ({
+      tag: "struct",
+      sym: comp.sym,
+      type: comp.type,
+    }),
+    struct_init: (comp) => ({
+      tag: "struct_init",
+      sym: comp.sym,
+      args: comp.args,
+    }),
   };
 
   annotate = (comp) => this.annotate_comp[comp.tag](comp);
@@ -286,8 +296,14 @@ export class RustTypeChecker {
       );
     },
     let: (comp, te) => {
-      const declared_type = comp.type;
+      let declared_type = comp.type;
+      if (comp.type.tag != null) {
+        // type is struct
+        declared_type = this.type(comp.type, te);
+      }
+
       const actual_type = this.type(comp.expr, te);
+
       if (this.equal_type(actual_type, declared_type)) {
         return "undefined";
       } else {
@@ -338,12 +354,15 @@ export class RustTypeChecker {
       let decls;
       if (!comp.body.stmts) {
         decls =
-          comp.body.tag === "let" || comp.body.tag === "fun"
+          comp.body.tag === "let" ||
+          comp.body.tag === "fun" ||
+          comp.body.tag === "struct"
             ? [comp.body]
             : null;
       } else {
         decls = comp.body.stmts.filter(
-          (comp) => comp.tag === "let" || comp.tag === "fun"
+          (comp) =>
+            comp.tag === "let" || comp.tag === "fun" || comp.tag === "struct"
         );
       }
       let extended_te = te;
@@ -378,6 +397,27 @@ export class RustTypeChecker {
       this.ALWAYS_RET = true;
       return { tag: "ret", always: true, expr: ret_type };
     },
+    struct: (comp, te) => {
+      return "undefined";
+    },
+    struct_init: (comp, te) => {
+      const expected_type = this.lookup_type(comp.sym, te);
+      const expected_args = expected_type.fields.map((field) => field.type);
+      const actual_args = comp.args.map((e) => this.type(e, te));
+
+      if (this.equal_types(expected_args, actual_args)) {
+        return expected_type;
+      } else {
+        throw new TypeCheckerError(
+          "type Error in variable declaration; " +
+            "declared type: " +
+            this.unparse_types(expected_args) +
+            ", " +
+            "actual type: " +
+            this.unparse_types(actual_args)
+        );
+      }
+    },
   };
 
   type = (comp, te) => {
@@ -385,17 +425,20 @@ export class RustTypeChecker {
     return this.type_comp[comp.tag](comp, te);
   };
 
-  unparse_types = (ts) =>
-    ts.length === 0
+  unparse_types = (ts) => {
+    // console.log("unparse types: " + JSON.stringify(ts));
+    return ts.length === 0
       ? "null"
       : ts.reduce(
           (s, t) =>
             s === "" ? this.unparse_type(t) : s + ", " + this.unparse_type(t),
           ""
         );
+  };
 
-  unparse_type = (t) =>
-    typeof t == "string"
+  unparse_type = (t) => {
+    // console.log("unparse type: " + t);
+    return typeof t == "string"
       ? t
       : t.tag != null && t.tag === "fun"
       ? // t is function type
@@ -404,8 +447,18 @@ export class RustTypeChecker {
         " > " +
         this.unparse_type(t.res) +
         ")"
+      : t.tag != null && t.tag === "struct"
+      ? // t is struct type
+        t.fields.reduce(
+          (s, t) =>
+            s === ""
+              ? this.unparse_type(t.type)
+              : s + ", " + this.unparse_type(t.type),
+          ""
+        )
       : // t is return, break or continue type
         this.unparse_type(t.expr);
+  };
 
   equal_types = (ts1, ts2) =>
     this.unparse_types(ts1) === this.unparse_types(ts2);

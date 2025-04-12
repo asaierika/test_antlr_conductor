@@ -12,7 +12,8 @@ stmt: let_decl
     | if_stmt
     | return_stmt
     | block
-    | func_def;   
+    | func_def
+    | struct_def;   
 
 let_decl: 'let' ID ':' type '=' expr ';'?;
 assign_stmt: ID '=' expr ';'?;
@@ -28,8 +29,12 @@ func_def: 'fn' ID '(' params? ')' ('->' type)? block;
 params: param (',' param)*;
 param: ID ':' type;
 
+struct_def: 'struct' ID '{' struct_field ( ',' struct_field)* '}' ';'?;
+struct_field: ID ':' type;
+
 expr: 
     ID '(' args? ')'                                        # Application
+    | ID '{' args? '}'                                      # StructInit
     | op=('-' | '!') expr                                   # UnaryOp
     | expr op=('*' | '/' | '%') expr                        # BinaryOp
     | expr op=('+' | '-') expr                              # BinaryOp
@@ -45,7 +50,7 @@ expr:
 
 args: expr (',' expr)*;
 
-type: 'i32' | 'bool' | 'f64';
+type: 'i32' | 'bool' | 'f64' | ID;
 
 // Lexer rules
 TRUE: 'true';
