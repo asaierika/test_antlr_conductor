@@ -19,6 +19,8 @@ export class RustTypeChecker {
 
   unary_bool_type = { tag: "fun", args: ["bool"], res: "bool" };
 
+  unary_any_type = { tag: "fun", args: "any", res: "any" };
+
   global_type_frame = {
     undefined: "undefined",
     math_E: "number",
@@ -37,6 +39,8 @@ export class RustTypeChecker {
     "||": this.binary_bool_type,
     "-unary": this.unary_arith_type,
     "!": this.unary_bool_type,
+    "&": this.unary_any_type,
+    "&mut": this.unary_any_type,
   };
 
   empty_type_environment = null;
@@ -258,6 +262,11 @@ export class RustTypeChecker {
       let is_equal = false;
       const expected_arg_types = fun_type.args;
       const actual_arg_types = comp.args.map((e) => this.type(e, te));
+
+      if (expected_arg_types === "any") {
+        // & and mut&: unary any type
+        return actual_arg_types[0];
+      }
 
       if (fun_type.args.includes("number")) {
         // handles the case for unary_arith_type, binary_arith_type and number_comparison_type
