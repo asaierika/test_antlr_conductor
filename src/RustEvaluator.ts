@@ -50,13 +50,11 @@ export class RustEvaluator extends BasicEvaluator {
   private executionCount: number;
   private astToJsonVisitor: ASTToJsonVisitor;
   private heap: DataView;
-  private stack: DataView;
   private free: number;
   private OS: number[];
   private PC: number;
   private E: number;
   private RTS: number[];
-  private ST_OS: number[];
   private stringPool: Record<string, { addr: number; str: string }[]>;
   private literals: {
     false: number;
@@ -258,20 +256,20 @@ export class RustEvaluator extends BasicEvaluator {
     return new_env_addr;
   };
 
-  heap_frame_display = (address: number) => {
-    const size = this.heap_get_num_children(address);
-    for (let i = 0; i < size; i++) {
-      const value = this.heap_get_child(address, i);
-    }
-  };
+  // heap_frame_display = (address: number) => {
+  //   const size = this.heap_get_num_children(address);
+  //   for (let i = 0; i < size; i++) {
+  //     const value = this.heap_get_child(address, i);
+  //   }
+  // };
 
-  heap_env_display = (env_address: number) => {
-    const size = this.heap_get_num_children(env_address);
-    for (let i = 0; i < size; i++) {
-      const frame = this.heap_get_child(env_address, i);
-      this.heap_frame_display(frame);
-    }
-  };
+  // heap_env_display = (env_address: number) => {
+  //   const size = this.heap_get_num_children(env_address);
+  //   for (let i = 0; i < size; i++) {
+  //     const frame = this.heap_get_child(env_address, i);
+  //     this.heap_frame_display(frame);
+  //   }
+  // };
 
   // NOTE: Number funcs
   is_number = (addr: number) => this.heap_get_tag(addr) === Tag.Number;
@@ -381,8 +379,7 @@ export class RustEvaluator extends BasicEvaluator {
       // if (is_Unassigned(val)) error("access of unassigned variable");
       this.OS.push(val);
     },
-    ASSIGN: (instr: { tag: string; pos: [number, number] }) =>
-      this.heap_set_env_value(this.E, instr.pos, this.OS[this.OS.length - 1]),
+    ASSIGN: (instr: { tag: string; pos: [number, number] }) => this.heap_set_env_value(this.E, instr.pos, this.OS[this.OS.length - 1]),
     LDF: (instr: { tag: string; arity: number; addr: number }) => {
       const closure_address = this.heap_allocate_closure(
         instr.arity,
@@ -403,7 +400,6 @@ export class RustEvaluator extends BasicEvaluator {
         frame_address,
         this.heap_get_closure_env(fun)
       );
-      this.heap_env_display(this.E);
       this.PC = this.heap_get_closure_pc(fun);
     },
     TAIL_CALL: (instr: { tag: string; arity: number }) => {
@@ -486,8 +482,9 @@ export class RustEvaluator extends BasicEvaluator {
       console.log("compiled: ");
       console.log(instrs);
 
-      // Execute compiled code
-      const res = this.run(instrs);
+      // // Execute compiled code
+      // const res = this.run(instrs);
+      const res = 0;
       // Send the result to the REPL
       this.conductor.sendOutput(`Result of expression: ${res}`);
     } catch (error) {
