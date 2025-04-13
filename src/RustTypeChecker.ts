@@ -19,9 +19,14 @@ export class RustTypeChecker {
 
   unary_bool_type = { tag: "fun", args: ["bool"], res: "bool" };
 
-  unary_mut_type = { tag: "fun", immutable: false, args: "any", res: "any" };
-  unary_immut_type = { tag: "fun", immutable: true, args: "any", res: "any" };
-  unary_any_type = { tag: "fun", args: "any", res: "any" };
+  unary_mut_type = { tag: "fun", is_imut_op: false, args: ["any"], res: "any" };
+  unary_immut_type = {
+    tag: "fun",
+    is_imut_op: true,
+    args: ["any"],
+    res: "any",
+  };
+  unary_any_type = { tag: "fun", args: ["any"], res: "any" };
 
   global_type_frame = {
     undefined: "undefined",
@@ -138,6 +143,11 @@ export class RustTypeChecker {
       sym: comp.sym,
       expr: this.annotate(comp.expr),
     }),
+    assmt_deref: (comp) => ({
+      tag: "assmt_deref",
+      sym: this.annotate(comp.sym),
+      expr: this.annotate(comp.expr),
+    }),
     struct: (comp) => ({
       tag: "struct",
       sym: comp.sym,
@@ -171,8 +181,17 @@ export class RustTypeChecker {
     lit: (comp, te) =>
       comp.type != "f64" && comp.type != "i32" && comp.type != "bool"
         ? new TypeCheckerError("unknown literal: " + comp.val)
-        : comp.type,
-    nam: (comp, te) => this.lookup_type(comp.sym, te),
+        : { immutable: comp.immutable, expr: comp.type },
+    nam: (comp, te) => {
+      const type = this.lookup_type(comp.sym, te);
+      if (type.tag === "fun") {
+        return type;
+      }
+      return {
+        immutable: comp.immutable,
+        expr: type,
+      };
+    },
     unop: (comp, te) =>
       this.type(
         { tag: "app", fun: { tag: "nam", sym: comp.sym }, args: [comp.frst] },
@@ -198,7 +217,7 @@ export class RustTypeChecker {
       ),
     cond: (comp, te) => {
       const t0 = this.type(comp.pred, te);
-      if (t0 !== "bool")
+      if (t0.expr !== "bool")
         throw new TypeCheckerError(
           "expected predicate type: bool, " +
             "actual predicate type: " +
@@ -234,7 +253,7 @@ export class RustTypeChecker {
     },
     while: (comp, te) => {
       const t0 = this.type(comp.pred, te);
-      if (t0 !== "bool")
+      if (t0.expr !== "bool")
         throw new TypeCheckerError(
           "expected predicate type: bool, " +
             "actual predicate type: " +
@@ -265,6 +284,7 @@ export class RustTypeChecker {
     },
     app: (comp, te) => {
       const fun_type = this.type(comp.fun, te);
+
       if (fun_type.tag !== "fun")
         throw new TypeCheckerError(
           "type Error in application; function " +
@@ -275,11 +295,11 @@ export class RustTypeChecker {
       const expected_arg_types = fun_type.args;
       const actual_arg_types = comp.args.map((e) => this.type(e, te));
       if (comp.fun.sym === "*unary") {
-        const actual_arg_type = actual_arg_types[0];
+        const actual_arg_type = actual_arg_types[0].expr;
         if (actual_arg_type.startsWith("&mut")) {
-          return actual_arg_type.substring(4);
+          return { immutable: false, expr: actual_arg_type.substring(4) };
         } else if (actual_arg_type.startsWith("&")) {
-          return { tag: "immutable", expr: actual_arg_type.substring(1) };
+          return { immutable: true, expr: actual_arg_type.substring(1) };
         } else {
           throw new TypeCheckerError(
             "type Error in application; " + "cannot deref non-reference type"
@@ -288,16 +308,18 @@ export class RustTypeChecker {
       }
       if (comp.fun.sym === "&" || comp.fun.sym === "&mut") {
         // & and mut&
-        const actual_arg = comp.args[0];
         const actual_arg_type = actual_arg_types[0];
-        if (!fun_type.immutable && actual_arg.tag === "lit") {
+        if (!fun_type.is_imut_op && actual_arg_type.immutable) {
           // for now only constants are immutable
           throw new TypeCheckerError(
             "type Error in application; " + "cannot borrow immutable as mutable"
           );
         }
 
-        return comp.fun.sym + actual_arg_type;
+        return {
+          immutable: false,
+          expr: comp.fun.sym + actual_arg_type.expr,
+        };
       }
 
       if (fun_type.args.includes("number")) {
@@ -305,25 +327,25 @@ export class RustTypeChecker {
         const expected_arg_types_i32 = expected_arg_types.map((arg) =>
           arg === "number" ? "i32" : arg
         );
-        const expected_trs_type_i32 =
+        const expected_res_type_i32 =
           fun_type.res === "number" ? "i32" : fun_type.res;
 
         if (this.equal_types(actual_arg_types, expected_arg_types_i32)) {
-          return expected_trs_type_i32;
+          return { immutable: true, expr: expected_res_type_i32 };
         }
 
         const expected_arg_types_f64 = expected_arg_types.map((arg) =>
           arg === "number" ? "f64" : arg
         );
-        const expected_trs_type_f64 =
+        const expected_res_type_f64 =
           fun_type.res === "number" ? "f64" : fun_type.res;
 
         if (this.equal_types(actual_arg_types, expected_arg_types_f64)) {
-          return expected_trs_type_f64;
+          return { immutable: true, expr: expected_res_type_f64 };
         }
       } else {
         if (this.equal_types(actual_arg_types, expected_arg_types)) {
-          return fun_type.res;
+          return { immutable: true, expr: fun_type.res };
         }
       }
 
@@ -360,6 +382,32 @@ export class RustTypeChecker {
     },
     assmt: (comp, te) => {
       const declared_type = this.lookup_type(comp.sym, te);
+      const actual_type = this.type(comp.expr, te);
+      if (this.equal_type(actual_type, declared_type)) {
+        return "undefined";
+      } else {
+        throw new TypeCheckerError(
+          "type Error in variable assignment; " +
+            "declared type: " +
+            this.unparse_type(declared_type) +
+            ", " +
+            "actual type: " +
+            this.unparse_type(actual_type)
+        );
+      }
+    },
+    assmt_deref: (comp, te) => {
+      if (!comp.is_deref_type) {
+        throw new TypeCheckerError(
+          "cannot assign expression that is not deref type"
+        );
+      }
+
+      const declared_type = this.type(comp.sym, te);
+      if (declared_type.immutable) {
+        throw new TypeCheckerError("cannot assign immutable deref type");
+      }
+
       const actual_type = this.type(comp.expr, te);
       if (this.equal_type(actual_type, declared_type)) {
         return "undefined";
@@ -479,7 +527,7 @@ export class RustTypeChecker {
   };
 
   unparse_type = (t) => {
-    // console.log("unparse type: " + t);
+    //console.log("unparse type: " + JSON.stringify(t));
     return typeof t == "string"
       ? t
       : t.tag != null && t.tag === "fun"
@@ -498,12 +546,12 @@ export class RustTypeChecker {
               : s + ", " + this.unparse_type(t.type),
           ""
         )
-      : // t is immutable, return, break or continue type
-        this.unparse_type(t.expr);
+      : this.unparse_type(t.expr);
   };
 
-  equal_types = (ts1, ts2) =>
-    this.unparse_types(ts1) === this.unparse_types(ts2);
+  equal_types = (ts1, ts2) => {
+    return this.unparse_types(ts1) === this.unparse_types(ts2);
+  };
 
   equal_type = (t1, t2) => this.unparse_type(t1) === this.unparse_type(t2);
 
