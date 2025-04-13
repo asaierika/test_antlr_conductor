@@ -89,7 +89,10 @@ export class ASTToJsonVisitor
   visitUnaryOp(ctx: UnaryOpContext): any {
     return {
       tag: "unop",
-      sym: ctx._op.text == "-" ? "-unary" : ctx._op.text,
+      sym:
+        ctx._op.text == "-" || ctx._op.text == "*"
+          ? ctx._op.text + "unary"
+          : ctx._op.text,
       frst: this.visit(ctx.expr()),
     };
   }
@@ -209,6 +212,7 @@ export class ASTToJsonVisitor
   }
 
   visitType(ctx: TypeContext): any {
+    // TODO: handle ID
     return ctx.getText();
   }
 

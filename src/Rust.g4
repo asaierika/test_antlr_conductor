@@ -33,8 +33,8 @@ struct_def: 'struct' ID '{' struct_field ( ',' struct_field)* '}' ';'?;
 struct_field: ID ':' type;
 
 type
-    : ('&' 'mut'?)*           // Zero or more & or &mut layers
-      ( 'i32'                 // Followed by a base type
+    : ('&' 'mut'?)*           
+      ( 'i32'                 
       | 'bool'
       | 'f64'
       | ID
@@ -45,7 +45,7 @@ type
 expr: 
     ID '(' args? ')'                                        # Application
     | ID '{' args? '}'                                      # StructInit
-    | op=('-' | '!' | '&' | '&mut') expr                    # UnaryOp
+    | op=('-' | '!' | '&' | '&mut' | '*') expr                # UnaryOp
     | expr op=('*' | '/' | '%') expr                        # BinaryOp
     | expr op=('+' | '-') expr                              # BinaryOp
     | expr op=('==' | '!=' | '<' | '>' | '<=' | '>=') expr  # BinaryOp

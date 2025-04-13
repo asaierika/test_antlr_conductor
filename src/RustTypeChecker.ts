@@ -21,6 +21,7 @@ export class RustTypeChecker {
 
   unary_mut_type = { tag: "fun", immutable: false, args: "any", res: "any" };
   unary_immut_type = { tag: "fun", immutable: true, args: "any", res: "any" };
+  unary_any_type = { tag: "fun", args: "any", res: "any" };
 
   global_type_frame = {
     undefined: "undefined",
@@ -42,6 +43,7 @@ export class RustTypeChecker {
     "!": this.unary_bool_type,
     "&": this.unary_immut_type,
     "&mut": this.unary_mut_type,
+    "*unary": this.unary_any_type,
   };
 
   empty_type_environment = null;
@@ -272,8 +274,19 @@ export class RustTypeChecker {
         );
       const expected_arg_types = fun_type.args;
       const actual_arg_types = comp.args.map((e) => this.type(e, te));
-
-      if (fun_type.immutable !== null) {
+      if (comp.fun.sym === "*unary") {
+        const actual_arg_type = actual_arg_types[0];
+        if (actual_arg_type.startsWith("&mut")) {
+          return actual_arg_type.substring(4);
+        } else if (actual_arg_type.startsWith("&")) {
+          return { tag: "immutable", expr: actual_arg_type.substring(1) };
+        } else {
+          throw new TypeCheckerError(
+            "type Error in application; " + "cannot deref non-reference type"
+          );
+        }
+      }
+      if (comp.fun.sym === "&" || comp.fun.sym === "&mut") {
         // & and mut&
         const actual_arg = comp.args[0];
         const actual_arg_type = actual_arg_types[0];
@@ -283,8 +296,7 @@ export class RustTypeChecker {
             "type Error in application; " + "cannot borrow immutable as mutable"
           );
         }
-        console.log(comp.fun.sym);
-        console.log(actual_arg_type);
+
         return comp.fun.sym + actual_arg_type;
       }
 
@@ -486,7 +498,7 @@ export class RustTypeChecker {
               : s + ", " + this.unparse_type(t.type),
           ""
         )
-      : // t is return, break or continue type
+      : // t is immutable, return, break or continue type
         this.unparse_type(t.expr);
   };
 

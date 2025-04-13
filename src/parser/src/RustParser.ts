@@ -124,7 +124,7 @@ export class RustParser extends antlr.Parser {
             this.state = 41;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
-            while ((((_la) & ~0x1F) === 0 && ((1 << _la) & 7390626) !== 0) || ((((_la - 35)) & ~0x1F) === 0 && ((1 << (_la - 35)) & 1855) !== 0)) {
+            while ((((_la) & ~0x1F) === 0 && ((1 << _la) & 15779234) !== 0) || ((((_la - 35)) & ~0x1F) === 0 && ((1 << (_la - 35)) & 1855) !== 0)) {
                 {
                 {
                 this.state = 38;
@@ -595,7 +595,7 @@ export class RustParser extends antlr.Parser {
             this.state = 116;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
-            while ((((_la) & ~0x1F) === 0 && ((1 << _la) & 7390626) !== 0) || ((((_la - 35)) & ~0x1F) === 0 && ((1 << (_la - 35)) & 1855) !== 0)) {
+            while ((((_la) & ~0x1F) === 0 && ((1 << _la) & 15779234) !== 0) || ((((_la - 35)) & ~0x1F) === 0 && ((1 << (_la - 35)) & 1855) !== 0)) {
                 {
                 {
                 this.state = 113;
@@ -929,7 +929,7 @@ export class RustParser extends antlr.Parser {
                 this.state = 182;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if ((((_la) & ~0x1F) === 0 && ((1 << _la) & 7373824) !== 0) || ((((_la - 35)) & ~0x1F) === 0 && ((1 << (_la - 35)) & 1795) !== 0)) {
+                if ((((_la) & ~0x1F) === 0 && ((1 << _la) & 15762432) !== 0) || ((((_la - 35)) & ~0x1F) === 0 && ((1 << (_la - 35)) & 1795) !== 0)) {
                     {
                     this.state = 181;
                     this.args();
@@ -952,7 +952,7 @@ export class RustParser extends antlr.Parser {
                 this.state = 188;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if ((((_la) & ~0x1F) === 0 && ((1 << _la) & 7373824) !== 0) || ((((_la - 35)) & ~0x1F) === 0 && ((1 << (_la - 35)) & 1795) !== 0)) {
+                if ((((_la) & ~0x1F) === 0 && ((1 << _la) & 15762432) !== 0) || ((((_la - 35)) & ~0x1F) === 0 && ((1 << (_la - 35)) & 1795) !== 0)) {
                     {
                     this.state = 187;
                     this.args();
@@ -971,7 +971,7 @@ export class RustParser extends antlr.Parser {
                 this.state = 191;
                 (localContext as UnaryOpContext)._op = this.tokenStream.LT(1);
                 _la = this.tokenStream.LA(1);
-                if(!((((_la) & ~0x1F) === 0 && ((1 << _la) & 7372800) !== 0))) {
+                if(!((((_la) & ~0x1F) === 0 && ((1 << _la) & 15761408) !== 0))) {
                     (localContext as UnaryOpContext)._op = this.errorHandler.recoverInline(this);
                 }
                 else {
@@ -1248,7 +1248,7 @@ export class RustParser extends antlr.Parser {
         1,17,1,17,1,17,1,17,5,17,217,8,17,10,17,12,17,220,9,17,1,18,1,18,
         1,18,5,18,225,8,18,10,18,12,18,228,9,18,1,18,0,1,34,19,0,2,4,6,8,
         10,12,14,16,18,20,22,24,26,28,30,32,34,36,0,6,2,0,17,19,43,43,2,
-        0,15,15,20,22,1,0,23,25,2,0,20,20,26,26,1,0,27,32,1,0,33,34,256,
+        0,15,15,20,23,1,0,23,25,2,0,20,20,26,26,1,0,27,32,1,0,33,34,256,
         0,41,1,0,0,0,2,57,1,0,0,0,4,59,1,0,0,0,6,68,1,0,0,0,8,74,1,0,0,0,
         10,78,1,0,0,0,12,91,1,0,0,0,14,97,1,0,0,0,16,101,1,0,0,0,18,105,
         1,0,0,0,20,112,1,0,0,0,22,123,1,0,0,0,24,136,1,0,0,0,26,144,1,0,
