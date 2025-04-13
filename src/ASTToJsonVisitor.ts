@@ -209,9 +209,6 @@ export class ASTToJsonVisitor
   }
 
   visitType(ctx: TypeContext): any {
-    if (ctx.ID() != null) {
-      return { tag: "nam", sym: ctx.ID().getText() };
-    }
     return ctx.getText();
   }
 

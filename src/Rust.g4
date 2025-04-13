@@ -32,6 +32,16 @@ param: ID ':' type;
 struct_def: 'struct' ID '{' struct_field ( ',' struct_field)* '}' ';'?;
 struct_field: ID ':' type;
 
+type
+    : ('&' 'mut'?)*           // Zero or more & or &mut layers
+      ( 'i32'                 // Followed by a base type
+      | 'bool'
+      | 'f64'
+      | ID
+      )
+    ;
+
+
 expr: 
     ID '(' args? ')'                                        # Application
     | ID '{' args? '}'                                      # StructInit
@@ -49,8 +59,6 @@ expr:
     ;
 
 args: expr (',' expr)*;
-
-type: 'i32' | 'bool' | 'f64' | ID;
 
 // Lexer rules
 TRUE: 'true';

@@ -19,7 +19,8 @@ export class RustTypeChecker {
 
   unary_bool_type = { tag: "fun", args: ["bool"], res: "bool" };
 
-  unary_any_type = { tag: "fun", args: "any", res: "any" };
+  unary_mut_type = { tag: "fun", immutable: false, args: "any", res: "any" };
+  unary_immut_type = { tag: "fun", immutable: true, args: "any", res: "any" };
 
   global_type_frame = {
     undefined: "undefined",
@@ -39,8 +40,8 @@ export class RustTypeChecker {
     "||": this.binary_bool_type,
     "-unary": this.unary_arith_type,
     "!": this.unary_bool_type,
-    "&": this.unary_any_type,
-    "&mut": this.unary_any_type,
+    "&": this.unary_immut_type,
+    "&mut": this.unary_mut_type,
   };
 
   empty_type_environment = null;
@@ -48,6 +49,16 @@ export class RustTypeChecker {
     this.global_type_frame,
     this.empty_type_environment
   );
+
+  check_for_duplicates = (decls) => {
+    const values = Object.values(decls).filter((v) => v["sym"] !== undefined);
+    const symbols = values.map((v) => v["sym"]);
+    if (new Set(symbols).size !== symbols.length) {
+      throw new TypeCheckerError(
+        "same variable cannot be delcared more than once"
+      );
+    }
+  };
 
   annotate_comp = {
     lit: (comp) => comp,
@@ -259,13 +270,22 @@ export class RustTypeChecker {
             "actual type: " +
             this.unparse_type(fun_type)
         );
-      let is_equal = false;
       const expected_arg_types = fun_type.args;
       const actual_arg_types = comp.args.map((e) => this.type(e, te));
 
-      if (expected_arg_types === "any") {
-        // & and mut&: unary any type
-        return actual_arg_types[0];
+      if (fun_type.immutable !== null) {
+        // & and mut&
+        const actual_arg = comp.args[0];
+        const actual_arg_type = actual_arg_types[0];
+        if (!fun_type.immutable && actual_arg.tag === "lit") {
+          // for now only constants are immutable
+          throw new TypeCheckerError(
+            "type Error in application; " + "cannot borrow immutable as mutable"
+          );
+        }
+        console.log(comp.fun.sym);
+        console.log(actual_arg_type);
+        return comp.fun.sym + actual_arg_type;
       }
 
       if (fun_type.args.includes("number")) {
@@ -376,6 +396,7 @@ export class RustTypeChecker {
       }
       let extended_te = te;
       if (decls) {
+        this.check_for_duplicates(decls);
         extended_te = this.extend_type_environment(
           decls.map((comp) => comp.sym),
           decls.map((comp) => comp.type),
