@@ -6,6 +6,7 @@ import { AbstractParseTreeVisitor } from "antlr4ng";
 import { ProgContext } from "./RustParser.js";
 import { StmtContext } from "./RustParser.js";
 import { Let_declContext } from "./RustParser.js";
+import { Assign_deref_stmtContext } from "./RustParser.js";
 import { Assign_stmtContext } from "./RustParser.js";
 import { Expr_stmtContext } from "./RustParser.js";
 import { If_stmtContext } from "./RustParser.js";
@@ -19,6 +20,7 @@ import { ParamsContext } from "./RustParser.js";
 import { ParamContext } from "./RustParser.js";
 import { Struct_defContext } from "./RustParser.js";
 import { Struct_fieldContext } from "./RustParser.js";
+import { TypeContext } from "./RustParser.js";
 import { StructInitContext } from "./RustParser.js";
 import { UnaryOpContext } from "./RustParser.js";
 import { VariableContext } from "./RustParser.js";
@@ -30,7 +32,6 @@ import { IntLiteralContext } from "./RustParser.js";
 import { ApplicationContext } from "./RustParser.js";
 import { BinaryOpContext } from "./RustParser.js";
 import { ArgsContext } from "./RustParser.js";
-import { TypeContext } from "./RustParser.js";
 
 
 /**
@@ -59,6 +60,12 @@ export class RustVisitor<Result> extends AbstractParseTreeVisitor<Result> {
      * @return the visitor result
      */
     visitLet_decl?: (ctx: Let_declContext) => Result;
+    /**
+     * Visit a parse tree produced by `RustParser.assign_deref_stmt`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitAssign_deref_stmt?: (ctx: Assign_deref_stmtContext) => Result;
     /**
      * Visit a parse tree produced by `RustParser.assign_stmt`.
      * @param ctx the parse tree
@@ -138,6 +145,12 @@ export class RustVisitor<Result> extends AbstractParseTreeVisitor<Result> {
      */
     visitStruct_field?: (ctx: Struct_fieldContext) => Result;
     /**
+     * Visit a parse tree produced by `RustParser.type`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitType?: (ctx: TypeContext) => Result;
+    /**
      * Visit a parse tree produced by the `StructInit`
      * labeled alternative in `RustParser.expr`.
      * @param ctx the parse tree
@@ -213,11 +226,5 @@ export class RustVisitor<Result> extends AbstractParseTreeVisitor<Result> {
      * @return the visitor result
      */
     visitArgs?: (ctx: ArgsContext) => Result;
-    /**
-     * Visit a parse tree produced by `RustParser.type`.
-     * @param ctx the parse tree
-     * @return the visitor result
-     */
-    visitType?: (ctx: TypeContext) => Result;
 }
 

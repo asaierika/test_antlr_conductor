@@ -31,6 +31,7 @@ import {
   Struct_fieldContext,
   StructInitContext,
   TypeContext,
+  Assign_deref_stmtContext,
 } from "./parser/src/RustParser";
 
 interface FunctionParameter {
@@ -60,6 +61,7 @@ export class ASTToJsonVisitor
       tag: "lit",
       val: parseInt(ctx.INT().getText()),
       type: "i32",
+      immutable: true,
     };
   }
 
@@ -68,6 +70,7 @@ export class ASTToJsonVisitor
       tag: "lit",
       val: ctx.TRUE() ? true : false,
       type: "bool",
+      immutable: true,
     };
   }
 
@@ -76,6 +79,7 @@ export class ASTToJsonVisitor
       tag: "lit",
       val: parseFloat(ctx.FLOAT().getText()),
       type: "f64",
+      immutable: true,
     };
   }
 
@@ -83,13 +87,17 @@ export class ASTToJsonVisitor
     return {
       tag: "nam",
       sym: ctx.ID().getText(),
+      immutable: false,
     };
   }
 
   visitUnaryOp(ctx: UnaryOpContext): any {
     return {
       tag: "unop",
-      sym: ctx._op.text == "-" ? "-unary" : ctx._op.text,
+      sym:
+        ctx._op.text == "-" || ctx._op.text == "*"
+          ? ctx._op.text + "unary"
+          : ctx._op.text,
       frst: this.visit(ctx.expr()),
     };
   }
@@ -191,6 +199,7 @@ export class ASTToJsonVisitor
       body: this.visit(ctx.block()),
       type: {
         tag: "fun",
+        immutable: true,
         args: ctx.params()
           ? this.visitParams(ctx.params()).map((prm) => prm.type)
           : [],
@@ -209,9 +218,7 @@ export class ASTToJsonVisitor
   }
 
   visitType(ctx: TypeContext): any {
-    if (ctx.ID() != null) {
-      return { tag: "nam", sym: ctx.ID().getText() };
-    }
+    // TODO: handle ID
     return ctx.getText();
   }
 
@@ -220,6 +227,15 @@ export class ASTToJsonVisitor
       tag: "assmt",
       sym: ctx.ID().getText(),
       expr: this.visit(ctx.expr()),
+    };
+  }
+
+  visitAssign_deref_stmt(ctx: Assign_deref_stmtContext): any {
+    return {
+      tag: "assmt_deref",
+      is_deref_type: ctx.expr()[0].getText().startsWith("*"),
+      sym: this.visit(ctx.expr()[0]),
+      expr: this.visit(ctx.expr()[1]),
     };
   }
 

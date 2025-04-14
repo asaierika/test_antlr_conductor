@@ -6,6 +6,7 @@ import { ErrorNode, ParseTreeListener, ParserRuleContext, TerminalNode } from "a
 import { ProgContext } from "./RustParser.js";
 import { StmtContext } from "./RustParser.js";
 import { Let_declContext } from "./RustParser.js";
+import { Assign_deref_stmtContext } from "./RustParser.js";
 import { Assign_stmtContext } from "./RustParser.js";
 import { Expr_stmtContext } from "./RustParser.js";
 import { If_stmtContext } from "./RustParser.js";
@@ -19,6 +20,7 @@ import { ParamsContext } from "./RustParser.js";
 import { ParamContext } from "./RustParser.js";
 import { Struct_defContext } from "./RustParser.js";
 import { Struct_fieldContext } from "./RustParser.js";
+import { TypeContext } from "./RustParser.js";
 import { StructInitContext } from "./RustParser.js";
 import { UnaryOpContext } from "./RustParser.js";
 import { VariableContext } from "./RustParser.js";
@@ -30,7 +32,6 @@ import { IntLiteralContext } from "./RustParser.js";
 import { ApplicationContext } from "./RustParser.js";
 import { BinaryOpContext } from "./RustParser.js";
 import { ArgsContext } from "./RustParser.js";
-import { TypeContext } from "./RustParser.js";
 
 
 /**
@@ -68,6 +69,16 @@ export class RustListener implements ParseTreeListener {
      * @param ctx the parse tree
      */
     exitLet_decl?: (ctx: Let_declContext) => void;
+    /**
+     * Enter a parse tree produced by `RustParser.assign_deref_stmt`.
+     * @param ctx the parse tree
+     */
+    enterAssign_deref_stmt?: (ctx: Assign_deref_stmtContext) => void;
+    /**
+     * Exit a parse tree produced by `RustParser.assign_deref_stmt`.
+     * @param ctx the parse tree
+     */
+    exitAssign_deref_stmt?: (ctx: Assign_deref_stmtContext) => void;
     /**
      * Enter a parse tree produced by `RustParser.assign_stmt`.
      * @param ctx the parse tree
@@ -199,6 +210,16 @@ export class RustListener implements ParseTreeListener {
      */
     exitStruct_field?: (ctx: Struct_fieldContext) => void;
     /**
+     * Enter a parse tree produced by `RustParser.type`.
+     * @param ctx the parse tree
+     */
+    enterType?: (ctx: TypeContext) => void;
+    /**
+     * Exit a parse tree produced by `RustParser.type`.
+     * @param ctx the parse tree
+     */
+    exitType?: (ctx: TypeContext) => void;
+    /**
      * Enter a parse tree produced by the `StructInit`
      * labeled alternative in `RustParser.expr`.
      * @param ctx the parse tree
@@ -328,16 +349,6 @@ export class RustListener implements ParseTreeListener {
      * @param ctx the parse tree
      */
     exitArgs?: (ctx: ArgsContext) => void;
-    /**
-     * Enter a parse tree produced by `RustParser.type`.
-     * @param ctx the parse tree
-     */
-    enterType?: (ctx: TypeContext) => void;
-    /**
-     * Exit a parse tree produced by `RustParser.type`.
-     * @param ctx the parse tree
-     */
-    exitType?: (ctx: TypeContext) => void;
 
     visitTerminal(node: TerminalNode): void {}
     visitErrorNode(node: ErrorNode): void {}

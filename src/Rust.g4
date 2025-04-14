@@ -5,6 +5,7 @@ prog: stmt* EOF;
 
 stmt: let_decl 
     | assign_stmt
+    | assign_deref_stmt
     | expr_stmt
     | break_stmt   
     | continue_stmt  
@@ -16,6 +17,7 @@ stmt: let_decl
     | struct_def;   
 
 let_decl: 'let' ID ':' type '=' expr ';'?;
+assign_deref_stmt: expr '=' expr ';'?;
 assign_stmt: ID '=' expr ';'?;
 expr_stmt: expr ';'?;
 if_stmt: 'if' expr block ('else' (block | if_stmt))?  ';'?;
@@ -32,10 +34,20 @@ param: ID ':' type;
 struct_def: 'struct' ID '{' struct_field ( ',' struct_field)* '}' ';'?;
 struct_field: ID ':' type;
 
+type
+    : ('&' 'mut'?)*           
+      ( 'i32'                 
+      | 'bool'
+      | 'f64'
+      | ID
+      )
+    ;
+
+
 expr: 
     ID '(' args? ')'                                        # Application
     | ID '{' args? '}'                                      # StructInit
-    | op=('-' | '!' | '&' | '&mut') expr                    # UnaryOp
+    | op=('-' | '!' | '&' | '&mut' | '*') expr                # UnaryOp
     | expr op=('*' | '/' | '%') expr                        # BinaryOp
     | expr op=('+' | '-') expr                              # BinaryOp
     | expr op=('==' | '!=' | '<' | '>' | '<=' | '>=') expr  # BinaryOp
@@ -49,8 +61,6 @@ expr:
     ;
 
 args: expr (',' expr)*;
-
-type: 'i32' | 'bool' | 'f64' | ID;
 
 // Lexer rules
 TRUE: 'true';
