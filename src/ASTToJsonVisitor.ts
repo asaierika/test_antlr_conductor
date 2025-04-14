@@ -271,11 +271,10 @@ export class ASTToJsonVisitor
   }
 
   visitStruct_field(ctx: Struct_fieldContext): any {
-    const type = this.visit(ctx.type());
     return {
       name: ctx.ID().getText(),
-      type: type,
-      immutable: type.tag === "nam" ? true : false,
+      type: this.visit(ctx.type()),
+      immutable: true,
     };
   }
 

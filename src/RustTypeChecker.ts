@@ -313,6 +313,10 @@ export class RustTypeChecker {
         const fields = struct_type.fields;
         for (const field of fields) {
           if (field.name === comp.args[1].sym) {
+            field.type =
+              field.type.tag === "nam"
+                ? this.type(field.type, te).expr
+                : field.type;
             return { immutable: field.immutable, expr: field.type };
           }
         }
@@ -534,8 +538,13 @@ export class RustTypeChecker {
     },
     struct_init: (comp, te) => {
       const expected_type = this.lookup_type(comp.sym, te);
-      const expected_args = expected_type.fields.map((field) => field.type);
-      const actual_args = comp.args.map((e) => this.type(e, te).expr);
+      const expected_args = expected_type.fields
+        .map((field) => field.type)
+        .map((arg) => (arg.tag === "nam" ? this.type(arg, te).expr : arg));
+
+      const actual_args = comp.args
+        .map((e) => this.type(e, te).expr)
+        .map((arg) => (arg.tag === "nam" ? this.type(arg, te).expr : arg));
 
       if (this.equal_types(expected_args, actual_args)) {
         return comp.sym;
@@ -569,6 +578,7 @@ export class RustTypeChecker {
   };
 
   unparse_type = (t) => {
+    // console.log("unparse type: " + JSON.stringify(t));
     return typeof t == "string"
       ? t
       : t.tag != null && t.tag === "fun"
