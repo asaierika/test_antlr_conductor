@@ -27,6 +27,7 @@ export class RustTypeChecker {
     res: "any",
   };
   unary_any_type = { tag: "fun", args: ["any"], res: "any" };
+  unary_struct_type = { tag: "fun", args: ["struct"], res: "any" };
 
   global_type_frame = {
     undefined: "undefined",
@@ -49,6 +50,7 @@ export class RustTypeChecker {
     "&": this.unary_immut_type,
     "&mut": this.unary_mut_type,
     "*unary": this.unary_any_type,
+    ".": this.unary_struct_type,
   };
 
   empty_type_environment = null;
@@ -293,7 +295,36 @@ export class RustTypeChecker {
             this.unparse_type(fun_type)
         );
       const expected_arg_types = fun_type.args;
+      if (comp.fun.sym === ".") {
+        let struct_type = this.type(comp.args[0], te).expr;
+        if (struct_type.tag === "nam") {
+          struct_type = this.type(struct_type, te).expr;
+        }
+        if (
+          comp.args[0].tag !== "nam" ||
+          struct_type.tag !== "struct" ||
+          comp.args[1].tag !== "nam"
+        ) {
+          throw new TypeCheckerError(
+            "type Error in application; " +
+              "invalid application of field access operator"
+          );
+        }
+        const fields = struct_type.fields;
+        for (const field of fields) {
+          if (field.name === comp.args[1].sym) {
+            return { immutable: field.immutable, expr: field.type };
+          }
+        }
+
+        throw new TypeCheckerError(
+          "type Error in application; " +
+            "accessing invalid field of a struct object"
+        );
+      }
+
       const actual_arg_types = comp.args.map((e) => this.type(e, te));
+
       if (comp.fun.sym === "*unary") {
         const actual_arg_type = actual_arg_types[0].expr;
         if (actual_arg_type.startsWith("&mut")) {
@@ -371,8 +402,8 @@ export class RustTypeChecker {
     },
     let: (comp, te) => {
       let declared_type = comp.type;
-      if (comp.type.tag != null) {
-        // type is struct
+      if (declared_type.tag === "nam") {
+        // struct type
         declared_type = this.type(comp.type, te);
       }
 
@@ -504,10 +535,10 @@ export class RustTypeChecker {
     struct_init: (comp, te) => {
       const expected_type = this.lookup_type(comp.sym, te);
       const expected_args = expected_type.fields.map((field) => field.type);
-      const actual_args = comp.args.map((e) => this.type(e, te));
+      const actual_args = comp.args.map((e) => this.type(e, te).expr);
 
       if (this.equal_types(expected_args, actual_args)) {
-        return expected_type;
+        return comp.sym;
       } else {
         throw new TypeCheckerError(
           "type Error in variable declaration; " +
@@ -538,7 +569,6 @@ export class RustTypeChecker {
   };
 
   unparse_type = (t) => {
-    //console.log("unparse type: " + JSON.stringify(t));
     return typeof t == "string"
       ? t
       : t.tag != null && t.tag === "fun"
@@ -550,13 +580,7 @@ export class RustTypeChecker {
         ")"
       : t.tag != null && t.tag === "struct"
       ? // t is struct type
-        t.fields.reduce(
-          (s, t) =>
-            s === ""
-              ? this.unparse_type(t.type)
-              : s + ", " + this.unparse_type(t.type),
-          ""
-        )
+        t.sym
       : this.unparse_type(t.expr);
   };
 

@@ -218,7 +218,9 @@ export class ASTToJsonVisitor
   }
 
   visitType(ctx: TypeContext): any {
-    // TODO: handle ID
+    if (ctx.ID()) {
+      return { tag: "nam", sym: ctx.ID().getText(), immutable: true };
+    }
     return ctx.getText();
   }
 
@@ -260,6 +262,7 @@ export class ASTToJsonVisitor
       sym: ctx.ID().getText(),
       type: {
         tag: "struct",
+        sym: ctx.ID().getText(),
         fields: ctx.struct_field()
           ? ctx.struct_field().map((field) => this.visit(field))
           : [],
@@ -268,9 +271,11 @@ export class ASTToJsonVisitor
   }
 
   visitStruct_field(ctx: Struct_fieldContext): any {
+    const type = this.visit(ctx.type());
     return {
       name: ctx.ID().getText(),
-      type: this.visit(ctx.type()),
+      type: type,
+      immutable: type.tag === "nam" ? true : false,
     };
   }
 
