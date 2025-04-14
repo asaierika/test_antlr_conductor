@@ -15,7 +15,7 @@ export class RustTypeChecker {
     res: "bool",
   };
 
-  binary_bool_type = { tag: "fun", args: ["bool"], res: "bool" };
+  binary_bool_type = { tag: "fun", args: ["bool", "bool"], res: "bool" };
 
   unary_bool_type = { tag: "fun", args: ["bool"], res: "bool" };
 
@@ -306,9 +306,20 @@ export class RustTypeChecker {
           );
         }
       }
+
       if (comp.fun.sym === "&" || comp.fun.sym === "&mut") {
         // & and mut&
         const actual_arg_type = actual_arg_types[0];
+        if (
+          comp.args[0].tag === "unop" &&
+          (comp.args[0].sym === "&" || comp.args[0].sym === "&mut")
+        ) {
+          throw new TypeCheckerError(
+            "type Error in application; " +
+              "cannot apply more than one & at the same time"
+          );
+        }
+
         if (!fun_type.is_imut_op && actual_arg_type.immutable) {
           // for now only constants are immutable
           throw new TypeCheckerError(
