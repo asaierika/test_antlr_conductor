@@ -273,7 +273,7 @@ export class ASTToJsonVisitor
     return {
       name: ctx.ID().getText(),
       type: this.visit(ctx.type()),
-      immutable: true,
+      immutable: false,
     };
   }
 

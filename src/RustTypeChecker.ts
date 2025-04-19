@@ -423,23 +423,25 @@ export class RustTypeChecker {
     },
     assmt: (comp, te) => {
       let declared_type;
-      console.log("comp.sym.tag: " + comp.sym.tag);
-      console.log("comp.sym: " + comp.sym.sym);
       if (comp.sym.tag === "unop" || comp.sym.tag === "binop") {
-        if (
-          (comp.sym.tag === "unop" && comp.sym.sym !== "*unary") ||
-          (comp.sym.tag === "binop" && comp.sym.sym !== ".")
-        ) {
+        if (comp.sym.tag === "unop" && comp.sym.sym === "*unary") {
+          declared_type = this.type(comp.sym, te);
+        } else if (comp.sym.tag === "binop" && comp.sym.sym === ".") {
+          declared_type = this.type(comp.sym, te);
+        } else {
           throw new TypeCheckerError(
             "type Error in variable assignment; " + "unassignable expression"
           );
         }
-        declared_type = this.type(comp.sym, te);
       } else {
         declared_type = this.lookup_type(comp.sym, te);
       }
 
-      const actual_type = this.type(comp.expr, te);
+      let actual_type = this.type(comp.expr, te);
+
+      if (actual_type.expr.tag === "nam") {
+        actual_type = this.type(actual_type.expr, te);
+      }
       if (declared_type.immutable) {
         throw new TypeCheckerError("cannot assign immutable type");
       }
