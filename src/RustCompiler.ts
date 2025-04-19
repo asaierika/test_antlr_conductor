@@ -11,7 +11,8 @@ interface VarMeta {
   is_mut: boolean; // if this is mutable
   imm_ref: number; // pointers from others to this
   mut_ref: number;
-  point_to?: string; // name of variable it points to
+  dec: boolean;
+  point_to?: string; // name of variable it points to, if null suggests invalid should not be dereferenced
 }
 
 export class RustCompiler {
@@ -43,11 +44,11 @@ export class RustCompiler {
     comp.tag === "seq"
       ? (comp.stmts as compile_comp[]).reduce((acc: VarMeta[], x) => acc.concat(this.scan_for_vars(x)), [])
       : comp.tag === "fun"
-      ? [{ sym: comp.sym, is_mut: false, imm_ref: 0, mut_ref: 0, is_copy: false }]
+      ? [{ sym: comp.sym, dec: false, is_mut: false, imm_ref: 0, mut_ref: 0, is_copy: false }]
       : comp.tag === "let"
       ? (comp.type as string).startsWith("&")
-      ? [{ sym: comp.sym, is_mut: (comp.type as string).includes("mut"), imm_ref: 0, mut_ref: 0, point_to: null, is_copy: !(comp.type as string).includes("mut") }] // reference type data owner
-      : [{ sym: comp.sym, is_mut: primitive_types.includes(comp.type as string) || (comp.type as string).startsWith("mut"), imm_ref: 0, mut_ref: 0, is_copy: primitive_types.includes(comp.type as string) }] // non-reference type data owner
+      ? [{ sym: comp.sym, dec: false, is_mut: true, imm_ref: 0, mut_ref: 0, point_to: "", is_copy: !(comp.type as string).includes("mut") }] // NOTE: Treat all as mutable can be reassigned
+      : [{ sym: comp.sym, dec: false, is_mut: true, imm_ref: 0, mut_ref: 0, is_copy: primitive_types.includes(comp.type as string) }]
       : []
 
   compile_seq = (seq: compile_comp[]) => {
@@ -76,6 +77,9 @@ export class RustCompiler {
   compile_comp = {
     lit: (comp: {val: primitive}) => this.instrs[this.wc++] = { tag: "LDC", val: comp.val },
     nam: (comp: {sym: string}) => {
+        const {pos, meta} = this.compile_env_pos(comp.sym);
+        if (!meta.dec) throw new Error(`${comp.sym} has not been declared`);
+        if (meta.point_to === null) throw new Error(`${comp.sym} is invalid`);
         this.instrs[this.wc++] = {
           tag: "LD",
           sym: comp.sym,
@@ -85,7 +89,7 @@ export class RustCompiler {
     unop: (comp: {sym: string, frst: compile_comp}) => {
       // NOTE: &, &mut, * can only be applied to lvalue
       const {sym: op, frst} = comp;
-      if (op === "&" || op === "&mut" || op === "*") {
+      if (op === "&" || op === "&mut" || op === "*unary") {
         if (comp.frst.tag !== "nam") throw new Error(`Cannot apply ${op} to ${frst.sym}, only lvalue allowed`);
         const {pos, meta} = this.compile_env_pos(frst.sym);
         if (op === "&mut") {
@@ -191,23 +195,32 @@ export class RustCompiler {
         if (!meta.is_mut || meta.imm_ref || meta.mut_ref) throw new Error(`Cannot assign to ${comp.sym} if it is not mutable or is borrowed`);
         const res = this.compile(comp.expr);
         // Update ref count
-        if (meta.point_to) {
-          if (res.tag !== "tempref") throw new Error(`${comp.sym} not initialized correctly`);
-          const ogpt = this.compile_env_pos(meta.point_to);
-          meta.point_to = res.var;
-          const npt = this.compile_env_pos(meta.point_to);
-          if (npt.meta.mut_ref) throw new Error(`Cannot assign ${comp.sym} to reference ${res.var} which is already borrowed mutably`);
-          if (meta.is_mut && (npt.meta.imm_ref || npt.meta.mut_ref)) throw new Error(`Cannot obtain mutable reference to ${res.var} for ${comp.sym}, already borrowed`);
-          // Check owner has longer lifetime than reference
-          // console.log(`npt: ${npt.pos}, ogpt: ${ogpt.pos}, pos: ${pos}`);
-          if (npt.pos[0] > pos[0]) throw new Error(`Cannot assign ${comp.sym} to reference ${meta.point_to} which has a shorter lifetime`);
-          if (npt.pos[0] == pos[0] && npt.pos[1] > pos[1]) throw new Error(`Cannot assign ${comp.sym} to reference ${meta.point_to} which has not initialized`)
-          if (meta.is_mut) {
-            ogpt.meta.mut_ref--;
-            npt.meta.mut_ref++;
+        if (meta.point_to !== undefined) {
+          if (!meta.is_mut) throw new Error(`Cannot reassign immutable ${comp.sym} to ${res.var}`);
+          if (meta.point_to !== null) {
+            const ogpt = this.compile_env_pos(meta.point_to);
+            if (meta.is_mut) ogpt.meta.mut_ref--;
+            else ogpt.meta.imm_ref--;
+          }
+          if (comp.expr.tag === "nam") {
+            const {pos: opos, meta: ometa} = this.compile_env_pos(comp.expr.sym as string);
+            meta.point_to = ometa.point_to;
+            if (meta.is_mut) ometa.point_to = null;
+            else {
+              const {pos: tpos, meta: tmeta} = this.compile_env_pos(meta.point_to);
+              tmeta.imm_ref++;
+            }
           } else {
-            ogpt.meta.imm_ref--;
-            npt.meta.imm_ref++;
+            if (res.tag !== "tempref") throw new Error(`${comp.sym} not initialized correctly`);
+            meta.point_to = res.var;
+            const npt = this.compile_env_pos(meta.point_to);
+            if (npt.meta.mut_ref) throw new Error(`Cannot assign ${comp.sym} to reference ${res.var} which is already borrowed mutably`);
+            if (meta.is_mut && (npt.meta.imm_ref || npt.meta.mut_ref)) throw new Error(`Cannot obtain mutable reference to ${res.var} for ${comp.sym}, already borrowed`);
+            // Check owner has longer lifetime than reference
+            // console.log(`npt: ${npt.pos}, ogpt: ${ogpt.pos}, pos: ${pos}`);
+            if (npt.pos[0] > pos[0]) throw new Error(`Cannot assign ${comp.sym} to reference ${meta.point_to} which has a shorter lifetime`);
+            if (meta.is_mut) npt.meta.mut_ref++;
+            else npt.meta.imm_ref++;
           }
         }
 
@@ -225,7 +238,7 @@ export class RustCompiler {
       // jump over the body of the lambda expression
       const goto_instruction = { tag: "GOTO", addr: undefined };
       this.instrs[this.wc++] = goto_instruction;
-      const prmsInfo: VarMeta[] = comp.prms.map((x) => ({sym: x.name, is_mut: primitive_types.includes(x.type) || x.type.includes("mut"), imm_ref: 0, mut_ref: 0, is_copy: primitive_types.includes(x.type) || x.type.includes("&")}));
+      const prmsInfo: VarMeta[] = comp.prms.map((x) => ({sym: x.name, dec: true, is_mut: primitive_types.includes(x.type) || x.type.includes("mut"), imm_ref: 0, mut_ref: 0, is_copy: primitive_types.includes(x.type) || x.type.includes("&")}));
       // extend this.compile-time environment
       this.compile_env.push(prmsInfo);
       this.compile(comp.body);
@@ -257,18 +270,29 @@ export class RustCompiler {
       const res = this.compile(comp.expr);
       const {pos, meta} = this.compile_env_pos(comp.sym);
       if (meta.point_to !== undefined) {
-        if (res.tag !== "tempref") throw new Error(`${comp.sym} not initialized correctly`);
-        const {pos: ppos, meta: pmeta} = this.compile_env_pos(res.var);
-        if (pmeta.mut_ref) throw new Error(`Cannot assign ${comp.sym} to reference ${res.var} which is already borrowed mutably`);
-        if (meta.is_mut && (pmeta.imm_ref || pmeta.mut_ref)) throw new Error(`Cannot obtain mutable reference to ${res.var} for ${comp.sym}, already borrowed`);
-        meta.point_to = res.var;
-        if (meta.is_mut) pmeta.mut_ref++;
-        else pmeta.imm_ref++;
+        if (comp.expr.tag === "nam") {
+          const {pos: opos, meta: ometa} = this.compile_env_pos(comp.expr.sym as string);
+          meta.point_to = ometa.point_to;
+          if (meta.is_mut) ometa.point_to = null;
+          else {
+            const {pos: tpos, meta: tmeta} = this.compile_env_pos(meta.point_to);
+            tmeta.imm_ref++;
+          }
+        } else {
+          if (res.tag !== "tempref") throw new Error(`${comp.sym} not initialized correctly`);
+          const {pos: ppos, meta: pmeta} = this.compile_env_pos(res.var);
+          if (pmeta.mut_ref) throw new Error(`Cannot assign ${comp.sym} to reference ${res.var} which is already borrowed mutably`);
+          if (meta.is_mut && (pmeta.imm_ref || pmeta.mut_ref)) throw new Error(`Cannot obtain mutable reference to ${res.var} for ${comp.sym}, already borrowed`);
+          meta.point_to = res.var;
+          if (meta.is_mut) pmeta.mut_ref++;
+          else pmeta.imm_ref++;
+        }
       }
       this.instrs[this.wc++] = {
         tag: "ASSIGN",
         pos: this.compile_env_pos(comp.sym).pos,
       };
+      meta.dec = true;
     },
     ret: (comp: {expr: compile_comp}) => {
       this.compile(comp.expr);
@@ -311,18 +335,11 @@ export class RustCompiler {
     },
     continue: (comp: compile_comp) => {
       const goto_instruction = { tag: "GOTO", addr: undefined };
-      const curr_wihle = this.while_instrs[this.while_instrs.length - 1];
-      if (!this.continue_map.has(curr_wihle)) {
-        this.continue_map.set(curr_wihle, [goto_instruction]);
-      } else {
-        this.continue_map.get(curr_wihle).push(goto_instruction);
-      }
-      const no_blocks = this.blk_map.get(
-        this.while_instrs[this.while_instrs.length - 1]
-      );
-      for (let i = 0; i < no_blocks; i++) {
-        this.instrs[this.wc++] = { tag: "EXIT_SCOPE" };
-      }
+      const curr_while = this.while_instrs[this.while_instrs.length - 1];
+      if (!this.continue_map.has(curr_while)) this.continue_map.set(curr_while, [goto_instruction]);
+      else this.continue_map.get(curr_while).push(goto_instruction);
+      const no_blocks = this.blk_map.get(this.while_instrs[this.while_instrs.length - 1]);
+      for (let i = 0; i < no_blocks; i++) this.instrs[this.wc++] = { tag: "EXIT_SCOPE" };
       this.instrs[this.wc++] = { tag: "POP" };
       this.instrs[this.wc++] = goto_instruction;
     },
