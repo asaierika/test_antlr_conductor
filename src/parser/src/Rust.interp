@@ -100,7 +100,7 @@ rule names:
 prog
 stmt
 let_decl
-assign_deref_stmt
+assign_expr_stmt
 assign_stmt
 expr_stmt
 if_stmt

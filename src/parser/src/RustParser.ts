@@ -61,7 +61,7 @@ export class RustParser extends antlr.Parser {
     public static readonly RULE_prog = 0;
     public static readonly RULE_stmt = 1;
     public static readonly RULE_let_decl = 2;
-    public static readonly RULE_assign_deref_stmt = 3;
+    public static readonly RULE_assign_expr_stmt = 3;
     public static readonly RULE_assign_stmt = 4;
     public static readonly RULE_expr_stmt = 5;
     public static readonly RULE_if_stmt = 6;
@@ -96,10 +96,10 @@ export class RustParser extends antlr.Parser {
         "FN", "WS", "COMMENT", "ID", "INT", "FLOAT"
     ];
     public static readonly ruleNames = [
-        "prog", "stmt", "let_decl", "assign_deref_stmt", "assign_stmt", 
-        "expr_stmt", "if_stmt", "while_loop", "break_stmt", "continue_stmt", 
-        "return_stmt", "block", "func_def", "params", "param", "struct_def", 
-        "struct_field", "type", "expr", "args",
+        "prog", "stmt", "let_decl", "assign_expr_stmt", "assign_stmt", "expr_stmt", 
+        "if_stmt", "while_loop", "break_stmt", "continue_stmt", "return_stmt", 
+        "block", "func_def", "params", "param", "struct_def", "struct_field", 
+        "type", "expr", "args",
     ];
 
     public get grammarFileName(): string { return "Rust.g4"; }
@@ -179,7 +179,7 @@ export class RustParser extends antlr.Parser {
                 this.enterOuterAlt(localContext, 3);
                 {
                 this.state = 50;
-                this.assign_deref_stmt();
+                this.assign_expr_stmt();
                 }
                 break;
             case 4:
@@ -304,9 +304,9 @@ export class RustParser extends antlr.Parser {
         }
         return localContext;
     }
-    public assign_deref_stmt(): Assign_deref_stmtContext {
-        let localContext = new Assign_deref_stmtContext(this.context, this.state);
-        this.enterRule(localContext, 6, RustParser.RULE_assign_deref_stmt);
+    public assign_expr_stmt(): Assign_expr_stmtContext {
+        let localContext = new Assign_expr_stmtContext(this.context, this.state);
+        this.enterRule(localContext, 6, RustParser.RULE_assign_expr_stmt);
         let _la: number;
         try {
             this.enterOuterAlt(localContext, 1);
@@ -1433,8 +1433,8 @@ export class StmtContext extends antlr.ParserRuleContext {
     public assign_stmt(): Assign_stmtContext | null {
         return this.getRuleContext(0, Assign_stmtContext);
     }
-    public assign_deref_stmt(): Assign_deref_stmtContext | null {
-        return this.getRuleContext(0, Assign_deref_stmtContext);
+    public assign_expr_stmt(): Assign_expr_stmtContext | null {
+        return this.getRuleContext(0, Assign_expr_stmtContext);
     }
     public expr_stmt(): Expr_stmtContext | null {
         return this.getRuleContext(0, Expr_stmtContext);
@@ -1522,7 +1522,7 @@ export class Let_declContext extends antlr.ParserRuleContext {
 }
 
 
-export class Assign_deref_stmtContext extends antlr.ParserRuleContext {
+export class Assign_expr_stmtContext extends antlr.ParserRuleContext {
     public constructor(parent: antlr.ParserRuleContext | null, invokingState: number) {
         super(parent, invokingState);
     }
@@ -1536,21 +1536,21 @@ export class Assign_deref_stmtContext extends antlr.ParserRuleContext {
         return this.getRuleContext(i, ExprContext);
     }
     public override get ruleIndex(): number {
-        return RustParser.RULE_assign_deref_stmt;
+        return RustParser.RULE_assign_expr_stmt;
     }
     public override enterRule(listener: RustListener): void {
-        if(listener.enterAssign_deref_stmt) {
-             listener.enterAssign_deref_stmt(this);
+        if(listener.enterAssign_expr_stmt) {
+             listener.enterAssign_expr_stmt(this);
         }
     }
     public override exitRule(listener: RustListener): void {
-        if(listener.exitAssign_deref_stmt) {
-             listener.exitAssign_deref_stmt(this);
+        if(listener.exitAssign_expr_stmt) {
+             listener.exitAssign_expr_stmt(this);
         }
     }
     public override accept<Result>(visitor: RustVisitor<Result>): Result | null {
-        if (visitor.visitAssign_deref_stmt) {
-            return visitor.visitAssign_deref_stmt(this);
+        if (visitor.visitAssign_expr_stmt) {
+            return visitor.visitAssign_expr_stmt(this);
         } else {
             return visitor.visitChildren(this);
         }

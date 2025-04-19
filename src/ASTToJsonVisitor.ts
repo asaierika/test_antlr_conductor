@@ -31,7 +31,7 @@ import {
   Struct_fieldContext,
   StructInitContext,
   TypeContext,
-  Assign_deref_stmtContext,
+  Assign_expr_stmtContext,
 } from "./parser/src/RustParser";
 
 interface FunctionParameter {
@@ -232,10 +232,9 @@ export class ASTToJsonVisitor
     };
   }
 
-  visitAssign_deref_stmt(ctx: Assign_deref_stmtContext): any {
+  visitAssign_expr_stmt(ctx: Assign_expr_stmtContext): any {
     return {
-      tag: "assmt_deref",
-      is_deref_type: ctx.expr()[0].getText().startsWith("*"),
+      tag: "assmt",
       sym: this.visit(ctx.expr()[0]),
       expr: this.visit(ctx.expr()[1]),
     };

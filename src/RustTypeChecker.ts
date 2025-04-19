@@ -145,11 +145,6 @@ export class RustTypeChecker {
       sym: comp.sym,
       expr: this.annotate(comp.expr),
     }),
-    assmt_deref: (comp) => ({
-      tag: "assmt_deref",
-      sym: this.annotate(comp.sym),
-      expr: this.annotate(comp.expr),
-    }),
     struct: (comp) => ({
       tag: "struct",
       sym: comp.sym,
@@ -427,34 +422,27 @@ export class RustTypeChecker {
       }
     },
     assmt: (comp, te) => {
-      const declared_type = this.lookup_type(comp.sym, te);
-      const actual_type = this.type(comp.expr, te);
-      if (this.equal_type(actual_type, declared_type)) {
-        return "undefined";
+      let declared_type;
+      console.log("comp.sym.tag: " + comp.sym.tag);
+      console.log("comp.sym: " + comp.sym.sym);
+      if (comp.sym.tag === "unop" || comp.sym.tag === "binop") {
+        if (
+          (comp.sym.tag === "unop" && comp.sym.sym !== "*unary") ||
+          (comp.sym.tag === "binop" && comp.sym.sym !== ".")
+        ) {
+          throw new TypeCheckerError(
+            "type Error in variable assignment; " + "unassignable expression"
+          );
+        }
+        declared_type = this.type(comp.sym, te);
       } else {
-        throw new TypeCheckerError(
-          "type Error in variable assignment; " +
-            "declared type: " +
-            this.unparse_type(declared_type) +
-            ", " +
-            "actual type: " +
-            this.unparse_type(actual_type)
-        );
-      }
-    },
-    assmt_deref: (comp, te) => {
-      if (!comp.is_deref_type) {
-        throw new TypeCheckerError(
-          "cannot assign expression that is not deref type"
-        );
-      }
-
-      const declared_type = this.type(comp.sym, te);
-      if (declared_type.immutable) {
-        throw new TypeCheckerError("cannot assign immutable deref type");
+        declared_type = this.lookup_type(comp.sym, te);
       }
 
       const actual_type = this.type(comp.expr, te);
+      if (declared_type.immutable) {
+        throw new TypeCheckerError("cannot assign immutable type");
+      }
       if (this.equal_type(actual_type, declared_type)) {
         return "undefined";
       } else {

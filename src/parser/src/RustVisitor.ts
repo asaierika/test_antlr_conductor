@@ -6,7 +6,7 @@ import { AbstractParseTreeVisitor } from "antlr4ng";
 import { ProgContext } from "./RustParser.js";
 import { StmtContext } from "./RustParser.js";
 import { Let_declContext } from "./RustParser.js";
-import { Assign_deref_stmtContext } from "./RustParser.js";
+import { Assign_expr_stmtContext } from "./RustParser.js";
 import { Assign_stmtContext } from "./RustParser.js";
 import { Expr_stmtContext } from "./RustParser.js";
 import { If_stmtContext } from "./RustParser.js";
@@ -61,11 +61,11 @@ export class RustVisitor<Result> extends AbstractParseTreeVisitor<Result> {
      */
     visitLet_decl?: (ctx: Let_declContext) => Result;
     /**
-     * Visit a parse tree produced by `RustParser.assign_deref_stmt`.
+     * Visit a parse tree produced by `RustParser.assign_expr_stmt`.
      * @param ctx the parse tree
      * @return the visitor result
      */
-    visitAssign_deref_stmt?: (ctx: Assign_deref_stmtContext) => Result;
+    visitAssign_expr_stmt?: (ctx: Assign_expr_stmtContext) => Result;
     /**
      * Visit a parse tree produced by `RustParser.assign_stmt`.
      * @param ctx the parse tree
