@@ -234,7 +234,7 @@ export class ASTToJsonVisitor
 
   visitAssign_expr_stmt(ctx: Assign_expr_stmtContext): any {
     return {
-      tag: "assmt",
+      tag: "assmt_deref",
       sym: this.visit(ctx.expr()[0]),
       expr: this.visit(ctx.expr()[1]),
     };

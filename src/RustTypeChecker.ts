@@ -145,6 +145,11 @@ export class RustTypeChecker {
       sym: comp.sym,
       expr: this.annotate(comp.expr),
     }),
+    assmt_deref: (comp) => ({
+      tag: "assmt",
+      sym: comp.sym,
+      expr: this.annotate(comp.expr),
+    }),
     struct: (comp) => ({
       tag: "struct",
       sym: comp.sym,
@@ -157,7 +162,10 @@ export class RustTypeChecker {
     }),
   };
 
-  annotate = (comp) => this.annotate_comp[comp.tag](comp);
+  annotate = (comp) => {
+    //console.log("annotate_comp: " + comp.tag);
+    return this.annotate_comp[comp.tag](comp);
+  };
 
   lookup_type = (x, e) => {
     if (!e || e.length == 0) {
@@ -602,7 +610,8 @@ export class RustTypeChecker {
 
   check = (program) => {
     try {
-      this.type(program, this.global_type_environment);
+      const annotated = this.annotate(program);
+      this.type(annotated, this.global_type_environment);
     } catch (x) {
       throw x;
     }
