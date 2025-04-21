@@ -25,9 +25,9 @@ export class RustCompiler {
   continue_map: Map<number, Goto_instruction[]> = new Map(); // maps the current while loop start addr to the continue instructions inside
   blk_map: Map<number, number> = new Map(); // maps the current while loop start addr to the number of blocks until the break/continue
 
+  // TODO: take non uniform but fixed size types into account like a struct and num
   compile_env_pos = (x: string): { pos: [number, number]; meta: VarMeta } => {
     let frame_index = this.compile_env.length;
-    console.log;
     while (this.value_index(this.compile_env[--frame_index], x) === -1);
     const valInd = this.value_index(this.compile_env[frame_index], x);
     return {
@@ -102,8 +102,11 @@ export class RustCompiler {
     return this.instrs;
   }
 
-  compile(comp: compile_comp) {
-    return this.compile_comp[comp.tag](comp);
+  compile = (comp: compile_comp) => this.compile_comp[comp.tag](comp);
+
+  print_vars = (msg: string, vars: VarMeta[]) => {
+    console.log(msg);
+    for (let i=0;i<vars.length;i++) console.log(vars[i]);
   }
 
   // NOTE: Two checks are ran:
@@ -216,9 +219,7 @@ export class RustCompiler {
       // assigns goto addr to the continues in the current while loop
       if (this.continue_map.has(loop_start)) {
         const continues = this.continue_map.get(loop_start);
-        continues.forEach((goto, index) => {
-          goto.addr = loop_start;
-        });
+        continues.forEach((goto, index) => { goto.addr = loop_start; });
         this.continue_map.delete(loop_start);
       }
 
@@ -337,7 +338,7 @@ export class RustCompiler {
         this.blk_map.set(key, this.blk_map.get(key) + 1);
 
       const locals = this.scan_for_vars(comp.body);
-      console.log("locals", locals);
+      this.print_vars("blk vars", locals);
       this.instrs[this.wc++] = { tag: "ENTER_SCOPE", num: locals.length };
       this.compile_env.push(locals);
       this.compile(comp.body);

@@ -9,14 +9,15 @@ import { RustTypeChecker } from "./RustTypeChecker";
 import { TypeCheckerError } from "./error/TypeCheckerError";
 
 const word_size = 8;
-const heap_size = 2 ** 20;
-const stack_size = 2 ** 10;
+const tmp_var_size = 2;
+const mem_size = 2 ** 20;
 const word_layout = {
   tag_os: 0,
   data_os: 1,
   size_os: 5,
 };
-const heap_make = (bytes: number) => {
+
+const mem_make = (bytes: number) => {
   if (bytes % word_size !== 0)
     throw new Error("heap bytes must be divisible by 8");
   const data = new ArrayBuffer(bytes);
@@ -30,38 +31,35 @@ enum Tag {
   Char = 2,
   Unassigned = 3,
   Number = 4,
-  Blockframe = 5,
-  Callframe = 6,
   Closure = 7,
-  Frame = 8,
-  Environment = 9,
   Builtin = 10,
   String = 11,
-  Null = 12,
 }
 
 const val_is_bool = (x: any) => typeof x === "boolean";
 const val_is_number = (x: any) => typeof x === "number";
 const val_is_string = (x: any) => typeof x === "string";
-const val_is_null = (x: any) => x === null;
 
-// TODO: RC
+type OS_prim = { isaddr: boolean; val: primitive };
+type OS_fun = { isaddr: boolean; val: [number, number, number]; isfun: true };
+type OS_t = OS_prim | OS_fun;
+
 export class RustEvaluator extends BasicEvaluator {
   private executionCount: number;
   private astToJsonVisitor: ASTToJsonVisitor;
-  private heap: DataView;
+  private mem: DataView;
   private free: number;
-  private OS: number[];
+  private stack: number[]; // addrs of start of each stack frame
+  private stacktop: number;
+  private FDD: number; // depth of the function currently in when declared
+  private FRD: number; // depth of the function currently in when called used to translate the compile time positions of vars
+  private TCF: number; // number of tail call frames
+
+  private OS: OS_t[];
   private PC: number;
-  private E: number;
-  private RTS: number[];
+  private RTS: [number, number, number][];
   private stringPool: Record<string, { addr: number; str: string }[]>;
-  private literals: {
-    false: number;
-    true: number;
-    null: number;
-    unassigned: number;
-  };
+  // private literals: { unassigned: number };
 
   constructor(conductor: IRunnerPlugin) {
     super(conductor);
@@ -69,55 +67,91 @@ export class RustEvaluator extends BasicEvaluator {
     this.astToJsonVisitor = new ASTToJsonVisitor();
   }
 
-  // NOTE: Heap Funcs
   heap_allocate = (tag: Tag, size: number) => {
     const addr = this.free;
     this.free += size;
-    this.heap.setUint8(addr * word_size, tag);
-    this.heap.setUint16(addr * word_size + word_layout.size_os, size);
+    this.mem.setUint8(addr * word_size, tag);
+    this.mem.setUint16(addr * word_size + word_layout.size_os, size);
     return addr;
   };
 
-  heap_get = (addr: number) => this.heap.getFloat64(addr * word_size);
-  heap_setw = (addr: number, x: number) =>
-    this.heap.setFloat64(addr * word_size, x);
-  heap_get_child = (addr: number, child_ind: number) =>
-    this.heap_get(addr + 1 + child_ind);
-  heap_set_child = (addr: number, child_ind: number, x: number) =>
-    this.heap_setw(addr + 1 + child_ind, x);
-  heap_get_tag = (addr: number): Tag => this.heap.getUint8(addr * word_size);
-  heap_get_size = (addr: number) =>
-    this.heap.getUint16(addr * word_size + word_layout.size_os);
-  heap_get_num_children = (addr: number) =>
-    this.heap_get_tag(addr) === Tag.Number ? 0 : this.heap_get_size(addr) - 1;
-  heap_setb_at_os = (addr: number, offset: number, x: number) =>
-    this.heap.setUint8(addr * word_size + offset, x);
-  heap_set2b_at_os = (addr: number, offset: number, x: number) =>
-    this.heap.setUint16(addr * word_size + offset, x);
-  heap_set4b_at_os = (addr: number, offset: number, x: number) =>
-    this.heap.setUint32(addr * word_size + offset, x);
-  heap_getb_at_os = (addr: number, offset: number) =>
-    this.heap.getUint8(addr * word_size + offset);
-  heap_get2b_at_os = (addr: number, offset: number) =>
-    this.heap.getUint16(addr * word_size + offset);
-  heap_get4b_at_os = (addr: number, offset: number) =>
-    this.heap.getUint32(addr * word_size + offset);
+  mem_get = (addr: number) => this.mem.getFloat64(addr * word_size);
+  mem_setw = (addr: number, x: number) =>
+    this.mem.setFloat64(addr * word_size, x);
+  mem_get_child = (addr: number, child_ind: number) =>
+    this.mem_get(addr + 1 + child_ind);
+  mem_set_child = (addr: number, child_ind: number, x: number) =>
+    this.mem_setw(addr + 1 + child_ind, x);
+  mem_get_tag = (addr: number): Tag => this.mem.getUint8(addr * word_size);
+  mem_get_size = (addr: number) =>
+    this.mem.getUint16(addr * word_size + word_layout.size_os);
+  mem_get_num_children = (addr: number) =>
+    this.mem_get_tag(addr) === Tag.Number ? 0 : this.mem_get_size(addr) - 1;
+  mem_setb_at_os = (addr: number, offset: number, x: number) =>
+    this.mem.setUint8(addr * word_size + offset, x);
+  mem_set2b_at_os = (addr: number, offset: number, x: number) =>
+    this.mem.setUint16(addr * word_size + offset, x);
+  mem_set4b_at_os = (addr: number, offset: number, x: number) =>
+    this.mem.setUint32(addr * word_size + offset, x);
+  mem_getb_at_os = (addr: number, offset: number) =>
+    this.mem.getUint8(addr * word_size + offset);
+  mem_get2b_at_os = (addr: number, offset: number) =>
+    this.mem.getUint16(addr * word_size + offset);
+  mem_get4b_at_os = (addr: number, offset: number) =>
+    this.mem.getUint32(addr * word_size + offset);
+  mem_copyw = (src: number, dest: number, size: number) => {
+    console.log("copying: ", src, dest, size);
+    for (let i = 0; i < size; i++)
+      this.mem_setw(dest + i, this.mem_get(src + i));
+  };
+
+  // NOTE: Stack funcs
+  stack_push_frame = (size: number) => {
+    this.stack.push(this.stacktop);
+    this.stacktop -= size * tmp_var_size;
+    if (this.stacktop < 0) throw new Error("Stack overflow"); // TODO: More accurately is when the stack space and heap space overlap
+  };
+
+  stack_pop_frame = () => {
+    const frame_addr = this.stack.pop();
+    if (frame_addr === undefined) throw new Error("Stack underflow");
+    this.stacktop = frame_addr;
+  };
+
+  stack_get = (fi: number, vi: number) => {
+    const frame_addr = this.stack[fi];
+    if (frame_addr === undefined) throw new Error("Unknown error");
+    return frame_addr - (vi + 1) * tmp_var_size; // +1 for left align
+  };
+
+  stack_set_num = (addr: number, v: number) => {
+    console.log("set num: ", addr * word_size, v);
+    this.mem.setUint8(addr * word_size, Tag.Number);
+    this.mem_set_child(addr, 0, v);
+  };
+
+  stack_set_true = (addr: number) =>
+    this.mem.setUint8(addr * word_size, Tag.True);
+  stack_set_false = (addr: number) =>
+    this.mem.setUint8(addr * word_size, Tag.False);
+
+  stack_set_closure = (
+    addr: number,
+    arity: number,
+    pc: number,
+    denv: number
+  ) => {
+    this.mem.setUint8(addr * word_size, Tag.Closure);
+    this.mem_setb_at_os(addr, word_layout.data_os, arity);
+    this.mem_set2b_at_os(addr, word_layout.data_os + 1, pc);
+    this.mem_set_child(addr, 0, denv);
+  };
 
   // NOTE: Literal Funcs
-  is_false = (addr: number) => this.heap_get_tag(addr) === Tag.False;
-  is_true = (addr: number) => this.heap_get_tag(addr) === Tag.True;
-  is_boolean = (addr: number) => this.is_true(addr) || this.is_false(addr);
-  is_null = (addr: number) => this.heap_get_tag(addr) === Tag.Null;
-  is_unassigned = (addr: number) => this.heap_get_tag(addr) === Tag.Unassigned;
-
-  heap_allocate_lits = () => {
-    this.literals = {
-      false: this.heap_allocate(Tag.False, 1),
-      true: this.heap_allocate(Tag.True, 1),
-      null: this.heap_allocate(Tag.Null, 1),
-      unassigned: this.heap_allocate(Tag.Unassigned, 1),
-    };
-  };
+  is_boolean = (addr: number) =>
+    this.mem_get_tag(addr) === Tag.True || this.mem_get_tag(addr) === Tag.False;
+  is_true = (addr: number) => this.mem_get_tag(addr) === Tag.True;
+  is_unassigned = (addr: number) => this.mem_get_tag(addr) === Tag.Unassigned;
 
   word_to_string = (word: number) => {
     const buf = new ArrayBuffer(8);
@@ -130,7 +164,7 @@ export class RustEvaluator extends BasicEvaluator {
   };
 
   // NOTE: String Funcs
-  is_str = (addr: number) => this.heap_get_tag(addr) === Tag.String;
+  is_str = (addr: number) => this.mem_get_tag(addr) === Tag.String;
 
   hash_str = (str: string) => {
     let hash = 5381;
@@ -151,131 +185,47 @@ export class RustEvaluator extends BasicEvaluator {
     } else this.stringPool[hash] = [];
 
     const addr = this.heap_allocate(Tag.String, 1);
-    this.heap_set4b_at_os(addr, word_layout.data_os, hash);
-    this.heap_set2b_at_os(addr, word_layout.size_os, i); // uses bytes for size to store index in pool entry
+    this.mem_set4b_at_os(addr, word_layout.data_os, hash);
+    this.mem_set2b_at_os(addr, word_layout.size_os, i); // uses bytes for size to store index in pool entry
     this.stringPool[hash].push({ addr, str });
     return addr;
   };
 
   heap_get_string_hash = (addr: number) =>
-    this.heap_get4b_at_os(addr, word_layout.data_os);
+    this.mem_get4b_at_os(addr, word_layout.data_os);
   heap_get_string_index = (addr: number) =>
-    this.heap_get2b_at_os(addr, word_layout.size_os);
+    this.mem_get2b_at_os(addr, word_layout.size_os);
   heap_get_string = (addr: number) =>
     this.stringPool[this.heap_get_string_hash(addr)][
       this.heap_get_string_index(addr)
     ].str;
 
   // NOTE: Builtin Funcs
-  is_builtin = (addr: number) => this.heap_get_tag(addr) === Tag.Builtin;
+  is_builtin = (addr: number) => this.mem_get_tag(addr) === Tag.Builtin;
 
   heap_allocate_builtin = (id: number) => {
     const addr = this.heap_allocate(Tag.Builtin, 1);
-    this.heap_setb_at_os(addr, word_layout.data_os, id);
+    this.mem_setb_at_os(addr, word_layout.data_os, id);
     return addr;
   };
 
   heap_get_builtin_id = (addr: number) =>
-    this.heap_getb_at_os(addr, word_layout.data_os);
+    this.mem_getb_at_os(addr, word_layout.data_os);
 
   // NOTE: Closure Funcs
-  is_closure = (addr: number) => this.heap_get_tag(addr) === Tag.Closure;
+  is_closure = (addr: number) => this.mem_get_tag(addr) === Tag.Closure;
 
-  heap_allocate_closure = (arity: number, pc: number, env: number) => {
-    const addr = this.heap_allocate(Tag.Closure, 2);
-    this.heap_setb_at_os(addr, word_layout.data_os, arity);
-    this.heap_set2b_at_os(addr, word_layout.data_os + 1, pc);
-    this.heap_set_child(addr, 0, env);
-    return addr;
-  };
-
-  heap_get_closure_arity = (addr: number) =>
-    this.heap_getb_at_os(addr, word_layout.data_os);
-  heap_get_closure_pc = (addr: number) =>
-    this.heap_get2b_at_os(addr, word_layout.data_os + 1);
-  heap_get_closure_env = (addr: number) => this.heap_get_child(addr, 0);
-
-  // NOTE: Blockframe funcs
-  is_Blockframe = (addr: number) => this.heap_get_tag(addr) === Tag.Blockframe;
-
-  heap_allocate_blkframe = (env: number) => {
-    const addr = this.heap_allocate(Tag.Blockframe, 2);
-    this.heap_set_child(addr, 0, env);
-    return addr;
-  };
-
-  heap_get_blkframe_env = (addr: number) => this.heap_get_child(addr, 0);
-
-  // NOTE: Callframe funcs
-  is_callframe = (addr: number) => this.heap_get_tag(addr) === Tag.Callframe;
-
-  heap_allocate_callframe = (env: number, pc: number) => {
-    const addr = this.heap_allocate(Tag.Callframe, 2);
-    this.heap_set2b_at_os(addr, word_layout.data_os, pc);
-    this.heap_set_child(addr, 0, env);
-    return addr;
-  };
-
-  heap_get_callframe_env = (addr: number) => this.heap_get_child(addr, 0);
-  heap_get_callframe_pc = (addr: number) =>
-    this.heap_get2b_at_os(addr, word_layout.data_os);
-
-  // NOTE: Env funcs
-  heap_allocate_frame = (num_of_vals: number) =>
-    this.heap_allocate(Tag.Frame, num_of_vals + 1);
-  heap_allocate_env = (num_of_frames: number) =>
-    this.heap_allocate(Tag.Environment, num_of_frames + 1);
-
-  // access environment given by addr using a "position", i.e. a pair of frame index and value index
-  heap_get_env_value = (env_addr: number, position: [number, number]) => {
-    const [frame_index, value_index] = position;
-    const frame_addr = this.heap_get_child(env_addr, frame_index);
-    return this.heap_get_child(frame_addr, value_index);
-  };
-
-  heap_set_env_value = (
-    env_addr: number,
-    position: [number, number],
-    value: number
-  ) => {
-    const [frame_index, value_index] = position;
-    const frame_addr = this.heap_get_child(env_addr, frame_index);
-    this.heap_set_child(frame_addr, value_index, value);
-  };
-
-  // extend a given environment by a new frame: create a new environment that is bigger by 1
-  // frame slot than the given environment. copy the frame addres of the given environment to the new environment.
-  // enter the addr of the new frame to end of the new environment
-  heap_env_extend = (frame_addr: number, env_addr: number) => {
-    const old_size = this.heap_get_size(env_addr);
-    const new_env_addr = this.heap_allocate_env(old_size);
-    let i: number;
-    for (i = 0; i < old_size - 1; i++)
-      this.heap_set_child(new_env_addr, i, this.heap_get_child(env_addr, i));
-    this.heap_set_child(new_env_addr, i, frame_addr);
-    return new_env_addr;
-  };
-
-  // heap_frame_display = (address: number) => {
-  //   const size = this.heap_get_num_children(address);
-  //   for (let i = 0; i < size; i++) {
-  //     const value = this.heap_get_child(address, i);
-  //   }
-  // };
-
-  // heap_env_display = (env_address: number) => {
-  //   const size = this.heap_get_num_children(env_address);
-  //   for (let i = 0; i < size; i++) {
-  //     const frame = this.heap_get_child(env_address, i);
-  //     this.heap_frame_display(frame);
-  //   }
-  // };
+  get_closure_arity = (addr: number) =>
+    this.mem_getb_at_os(addr, word_layout.data_os);
+  get_closure_pc = (addr: number) =>
+    this.mem_get2b_at_os(addr, word_layout.data_os + 1);
+  get_closure_denv = (addr: number) => this.mem_get_child(addr, 0);
 
   // NOTE: Number funcs
-  is_number = (addr: number) => this.heap_get_tag(addr) === Tag.Number;
+  is_number = (addr: number) => this.mem_get_tag(addr) === Tag.Number;
   heap_allocate_num = (n: number) => {
     const num_addr = this.heap_allocate(Tag.Number, 2);
-    this.heap_set_child(num_addr, 0, n);
+    this.mem_set_child(num_addr, 0, n);
     return num_addr;
   };
 
@@ -286,11 +236,9 @@ export class RustEvaluator extends BasicEvaluator {
         ? true
         : false
       : this.is_number(addr)
-      ? this.heap_get_child(addr, 0)
+      ? this.mem_get_child(addr, 0)
       : this.is_unassigned(addr)
       ? "<unassigned>"
-      : this.is_null(addr)
-      ? null
       : this.is_str(addr)
       ? this.heap_get_string(addr)
       : this.is_closure(addr)
@@ -300,14 +248,8 @@ export class RustEvaluator extends BasicEvaluator {
       : "unknown word tag: " + this.word_to_string(addr);
 
   value_to_address = (x: any) =>
-    val_is_bool(x)
-      ? x
-        ? this.literals.true
-        : this.literals.false
-      : val_is_number
+    val_is_number
       ? this.heap_allocate_num(x)
-      : val_is_null(x)
-      ? this.literals.null
       : val_is_string(x)
       ? this.heap_allocate_string(x)
       : "unknown word tag: " + this.word_to_string(x);
@@ -335,109 +277,176 @@ export class RustEvaluator extends BasicEvaluator {
     "!==": (x: any, y: any) => x !== y,
   };
 
-  apply_binop = (op: string, v2: any, v1: any): number => {
-    // console.log("v1: " + v1);
-    // console.log("v2: " + v2);
-    // console.log("op: " + op);
-    // console.log("v1 val: " + this.address_to_value(v1));
-    // console.log("v2 val: " + this.address_to_value(v2));
-    return this.value_to_address(
-      this.binop_microcode[op](
-        this.address_to_value(v1),
-        this.address_to_value(v2)
-      )
-    ) as number;
+  apply_binop = (op: string, opr1: OS_prim, opr2: OS_prim): number => {
+    return this.binop_microcode[op](
+      opr1.isaddr ? this.address_to_value(opr1.val as number) : opr1.val,
+      opr2.isaddr ? this.address_to_value(opr2.val as number) : opr2.val
+    );
   };
-  apply_unop = (op: string, v: any): number =>
-    this.value_to_address(
-      this.unop_microcode[op](this.address_to_value(v))
-    ) as number;
+  apply_unop = (op: string, opr: OS_prim): number =>
+    this.unop_microcode[op](
+      opr.isaddr ? this.address_to_value(opr.val as number) : opr.val
+    );
 
   microcode = {
     LDC: (instr: { tag: string; val: primitive }) =>
-      this.OS.push(this.value_to_address(instr.val) as number),
+      this.OS.push({ isaddr: false, val: instr.val }),
     UNOP: (instr: { tag: string; sym: string }) =>
-      this.OS.push(this.apply_unop(instr.sym, this.OS.pop())),
+      this.OS.push({
+        isaddr: false,
+        val: this.apply_unop(instr.sym, this.OS.pop() as OS_prim),
+      }),
     BINOP: (instr: { tag: string; sym: string }) =>
-      this.OS.push(this.apply_binop(instr.sym, this.OS.pop(), this.OS.pop())),
+      this.OS.push({
+        isaddr: false,
+        val: this.apply_binop(
+          instr.sym,
+          this.OS.pop() as OS_prim,
+          this.OS.pop() as OS_prim
+        ),
+      }),
     POP: (instr: { tag: string }) => this.OS.pop(),
     JOF: (instr: { tag: string; addr: number }) =>
-      (this.PC = this.is_true(this.OS.pop()) ? this.PC : instr.addr),
+      (this.PC = this.OS.pop().val ? this.PC : instr.addr),
     GOTO: (instr: { tag: string; addr: number }) => (this.PC = instr.addr),
-    // TODO: Convert to stack
+    // TODO: assumes each var use one word, havent account for structs
     ENTER_SCOPE: (instr: { tag: string; num: number }) => {
-      this.RTS.push(this.heap_allocate_blkframe(this.E));
-      const frame_address = this.heap_allocate_frame(instr.num);
-      this.E = this.heap_env_extend(frame_address, this.E);
-      for (let i = 0; i < instr.num; i++)
-        this.heap_set_child(frame_address, i, this.literals.unassigned);
+      this.stack_push_frame(instr.num);
     },
-    EXIT_SCOPE: (instr: { tag: string }) =>
-      (this.E = this.heap_get_blkframe_env(this.RTS.pop())),
+    EXIT_SCOPE: (instr: { tag: string }) => {
+      this.stack_pop_frame();
+    },
     LD: (instr: { tag: string; pos: [number, number] }) => {
-      const val = this.heap_get_env_value(this.E, instr.pos);
-      // if (is_Unassigned(val)) error("access of unassigned variable");
-      this.OS.push(val);
+      let [fi, vi] = instr.pos;
+      if (this.FDD != -1 && fi >= this.FDD) fi += this.FRD - this.FDD;
+      console.log("FDD FRD: ", this.FDD, this.FRD);
+      console.log("og pos: ", instr.pos);
+      console.log("Var pos: ", fi, vi);
+      this.OS.push({ isaddr: true, val: this.stack_get(fi, vi) });
     },
-    ASSIGN: (instr: { tag: string; pos: [number, number] }) => this.heap_set_env_value(this.E, instr.pos, this.OS[this.OS.length - 1]),
-    LDF: (instr: { tag: string; arity: number; addr: number }) => {
-      const closure_address = this.heap_allocate_closure(
-        instr.arity,
-        instr.addr,
-        this.E
-      );
-      this.OS.push(closure_address);
+    ASSIGN: (instr: { tag: string; pos: [number, number] }) => {
+      let [fi, vi] = instr.pos;
+      if (this.FDD != -1 && fi >= this.FDD) fi += this.FRD - this.FDD;
+      console.log("FDD FRD: ", this.FDD, this.FRD);
+      console.log("og pos: ", instr.pos);
+      console.log("Var pos: ", fi, vi);
+      const addr = this.stack_get(fi, vi);
+      console.log("Addr: ", addr);
+      const fopr = this.OS.pop();
+      if ("isfun" in fopr) {
+        this.stack_set_closure(addr, fopr.val[0], fopr.val[1], fopr.val[2]);
+      } else if (val_is_bool(fopr.val)) {
+        if (fopr.val) this.stack_set_true(addr);
+        else this.stack_set_false(addr);
+      } else if (val_is_number(fopr.val))
+        this.stack_set_num(addr, fopr.val as number);
+      else throw new Error("Trying to assign unsupported type");
     },
+    LDF: (instr: { tag: string; arity: number; addr: number }) =>
+      this.OS.push({
+        isaddr: false,
+        val: [instr.arity, instr.addr, this.stack.length],
+        isfun: true,
+      }),
     CALL: (instr: { tag: string; arity: number }) => {
-      const arity = instr.arity;
-      const fun = this.OS[this.OS.length - arity - 1];
-      const frame_address = this.heap_allocate_frame(arity);
-      for (let i = arity - 1; i >= 0; i--)
-        this.heap_set_child(frame_address, i, this.OS.pop());
-      this.OS.pop(); // pop fun
-      this.RTS.push(this.heap_allocate_callframe(this.E, this.PC));
-      this.E = this.heap_env_extend(
-        frame_address,
-        this.heap_get_closure_env(fun)
-      );
-      this.PC = this.heap_get_closure_pc(fun);
+      let addr = this.stacktop - tmp_var_size;
+      this.stack_push_frame(instr.arity);
+      for (let i = instr.arity - 1; i >= 0; i--) {
+        const arg = this.OS.pop();
+        if (!arg.isaddr) {
+          // place the value in the argument directly
+          if ("isfun" in arg) {
+            this.stack_set_closure(addr, arg.val[0], arg.val[1], arg.val[2]); // passing functions as args
+          } else if (val_is_bool(arg.val)) {
+            if (arg.val) this.stack_set_true(addr);
+            else this.stack_set_false(addr);
+          } else if (val_is_number(arg.val))
+            this.stack_set_num(addr, arg.val as number);
+          else throw new Error("Trying to bind unsupported type to argument");
+        } else this.mem_copyw(arg.val as number, addr, tmp_var_size);
+        addr -= tmp_var_size;
+      }
+
+      this.RTS.push([this.PC, this.FDD, this.FRD]);
+      const fun = this.OS.pop();
+      if ("isfun" in fun) {
+        this.PC = fun.val[1];
+        this.FDD = fun.val[2];
+        this.FRD = this.stack.length - 1;
+      } else {
+        this.PC = this.get_closure_pc(fun.val as number);
+        this.FDD = this.get_closure_denv(fun.val as number);
+        this.FRD = this.stack.length - 1; // FDD is counted without the params frame therefore so shud FRD
+      }
     },
     TAIL_CALL: (instr: { tag: string; arity: number }) => {
-      const arity = instr.arity;
-      const fun = this.OS[this.OS.length - arity - 1];
-      const frame_address = this.heap_allocate_frame(arity);
-      for (let i = arity - 1; i >= 0; i--)
-        this.heap_set_child(frame_address, i, this.OS.pop());
-      this.OS.pop(); // pop fun
-      // don't push on RTS here
-      this.E = this.heap_env_extend(
-        frame_address,
-        this.heap_get_closure_env(fun)
-      );
-      this.PC = this.heap_get_closure_pc(fun);
+      let addr = this.stacktop - tmp_var_size;
+      this.stack_push_frame(instr.arity);
+      for (let i = instr.arity - 1; i >= 0; i--) {
+        const arg = this.OS.pop();
+        if (!arg.isaddr) {
+          // place the value in the argument directly
+          if ("isfun" in arg) {
+            this.stack_set_closure(addr, arg.val[0], arg.val[1], arg.val[2]); // passing functions as args
+          } else if (val_is_bool(arg.val)) {
+            if (arg.val) this.stack_set_true(addr);
+            else this.stack_set_false(addr);
+          } else if (val_is_number(arg.val))
+            this.stack_set_num(addr, arg.val as number);
+          else throw new Error("Trying to bind unsupported type to argument");
+        } else this.mem_copyw(arg.val as number, addr, tmp_var_size);
+        addr -= tmp_var_size;
+      }
+
+      this.TCF++;
+      const fun = this.OS.pop();
+      if ("isfun" in fun) {
+        this.PC = fun.val[1];
+        this.FDD = fun.val[2];
+        this.FRD = this.stack.length - 1;
+      } else {
+        this.PC = this.get_closure_pc(fun.val as number);
+        this.FDD = this.get_closure_denv(fun.val as number);
+        this.FRD = this.stack.length - 1;
+      }
     },
     RESET: (instr: { tag: string }) => {
-      // keep popping...
-      const top_frame = this.RTS.pop();
-      if (this.is_callframe(top_frame)) {
-        // ...until top frame is a call frame
-        this.PC = this.heap_get_callframe_pc(top_frame);
-        this.E = this.heap_get_callframe_env(top_frame);
-      } else this.PC--;
+      const call_frame = this.RTS.pop();
+      this.PC = call_frame[0];
+      this.FDD = call_frame[1];
+      this.FRD = call_frame[2];
+      for (let i = 0; i <= this.TCF; i++) this.stack_pop_frame();
     },
+  };
+
+  print_OS = (msg: string) => {
+    console.log(msg);
+    for (let i = 0; i < this.OS.length; i++) console.log(this.OS[i]);
+  };
+
+  print_RTS = (msg: string) => {
+    console.log(msg);
+    for (let i = 0; i < this.RTS.length; i++) console.log(this.RTS[i]);
+  };
+
+  print_stack = (msg: string) => {
+    console.log(msg);
+    for (let i = 0; i < this.stack.length; i++) console.log(this.stack[i]);
   };
 
   run(instrs: { tag: string }[]) {
     this.OS = [];
     this.RTS = [];
+    this.stack = [];
     this.PC = 0;
     this.free = 0;
+    this.stacktop = mem_size / word_size;
+    console.log("stacktop: ", this.stacktop);
+    this.FDD = -1;
+    this.FRD = -1;
     this.stringPool = {};
-    this.heap = heap_make(heap_size);
-    this.E = this.heap_allocate_env(0);
+    this.mem = mem_make(mem_size);
     // console.log("allocated env");
-    this.heap_allocate_lits();
-    // console.log("allocated literals");
     //print_code()
     while (!(instrs[this.PC].tag === "DONE")) {
       //heap_display()
@@ -445,15 +454,20 @@ export class RustEvaluator extends BasicEvaluator {
       //display(instrs[PC].tag, "instr: ")
       //print_OS("\noperands:            ");
       //print_RTS("\nRTS:            ");
-      // console.log("PC: ", this.PC);
-      // console.log("instr: ", instrs[this.PC]);
+      console.log("PC: ", this.PC);
+      console.log("instr: ", instrs[this.PC]);
+      this.print_OS("\noperands:            ");
+      this.print_RTS("\nRTS:            ");
+      this.print_stack("\nstack:            ");
       const instr = instrs[this.PC++];
       //display(instrs[PC].tag, "next instruction: ")
       this.microcode[instr.tag](instr);
     }
     //display(OS, "\nfinal operands:           ")
     //print_OS()
-    return this.address_to_value(this.OS[0]);
+    if (this.OS[0].isaddr)
+      return this.address_to_value(this.OS[0].val as number);
+    else return this.OS[0].val;
   }
 
   async evaluateChunk(chunk: string): Promise<void> {
@@ -472,15 +486,13 @@ export class RustEvaluator extends BasicEvaluator {
 
       // Evaluate the parsed tree
       const json = this.astToJsonVisitor.visit(tree);
-      console.log("json: ");
-      console.log(json);
+      console.log("json: ", json);
 
       typeChecker.check(json);
       console.log("type checking passed");
 
       const instrs = compiler.compile_program(json);
-      console.log("compiled: ");
-      console.log(instrs);
+      console.log("compiled: ", instrs);
 
       // // Execute compiled code
       // const res = this.run(instrs);
