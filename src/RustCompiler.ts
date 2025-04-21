@@ -102,7 +102,10 @@ export class RustCompiler {
     return this.instrs;
   }
 
-  compile = (comp: compile_comp) => this.compile_comp[comp.tag](comp);
+  compile = (comp: compile_comp) => {
+    console.log("compiling", comp);
+    return this.compile_comp[comp.tag](comp);
+  }
 
   print_vars = (msg: string, vars: VarMeta[]) => {
     console.log(msg);
@@ -128,7 +131,7 @@ export class RustCompiler {
     unop: (comp: { sym: string; frst: compile_comp }) => {
       // NOTE: &, &mut, * can only be applied to lvalue
       const { sym: op, frst } = comp;
-      if (op === "&" || op === "&mut" || op === "*unary") {
+      if (op === "&" || op === "&mut") {
         if (comp.frst.tag !== "nam")
           throw new Error(
             `Cannot apply ${op} to ${frst.sym}, only lvalue allowed`
@@ -146,15 +149,23 @@ export class RustCompiler {
         }
         // TODO: Not necessarily true for heap allocated data where "point_to" is in heap not another variable
       }
-      this.compile(comp.frst);
-      this.instrs[this.wc++] = { tag: "UNOP", sym: comp.sym };
-      if (comp.sym === "&" || comp.sym === "&mut") {
-        return {
-          tag: "tempref",
-          is_mut: op === "&mut",
-          var: comp.frst.sym as string,
+      const res = this.compile(frst);
+      this.instrs[this.wc++] = { tag: "UNOP", sym: op };
+      if (op === "*unary") {
+        if (frst.tag === "nam") return {
+          tag: "tdref",
+          var: frst.sym as string,
         };
+        if (res.tag !== "tdref")
+          throw new Error(`dereference operator can only be chained ending with an lvalue`);
+        else return res;
       }
+      if (comp.sym === "&" || comp.sym === "&mut")
+        return {
+          tag: "tref",
+          is_mut: op === "&mut",
+          var: frst.sym as string,
+        };
     },
     binop: (comp: { frst: compile_comp; scnd: compile_comp; sym: string }) => {
       this.compile(comp.frst);
@@ -230,7 +241,7 @@ export class RustCompiler {
       this.compile(comp.fun);
       for (let arg of comp.args) {
         const res = this.compile(arg);
-        if (res && res.tag === "tempref") {
+        if (res && res.tag === "tref") {
           const { pos, meta } = this.compile_env_pos(res.var);
           if (res.is_mut && (meta.imm_ref || meta.mut_ref))
             throw new Error(
@@ -241,6 +252,18 @@ export class RustCompiler {
       }
       this.instrs[this.wc++] = { tag: "CALL", arity: comp.args.length };
     },
+    assmt_deref:
+      (comp: { expr: compile_comp; sym: {tag: "unop", sym: "*unary", frst: compile_comp} }) => {
+        const res = this.compile(comp.sym) as { tag: 'tdref', var: string };
+        const { pos, meta } = this.compile_env_pos(res.var);
+        console.log("assmt_deref", res.var, meta);
+        if (meta.imm_ref || meta.mut_ref)
+          throw new Error(
+            `Cannot assign ${res.var} as it is already borrowed`
+          );
+        this.compile(comp.expr);
+        this.instrs[this.wc++] = { tag: "ASSIGN_DEREF" };
+      },
     assmt:
       // store precomputed position info in ASSIGN instruction
       (comp: { expr: compile_comp; sym: string }) => {
@@ -274,7 +297,7 @@ export class RustCompiler {
               tmeta.imm_ref++;
             }
           } else {
-            if (res.tag !== "tempref")
+            if (res.tag !== "tref")
               throw new Error(`${comp.sym} not initialized correctly`);
             meta.point_to = res.var;
             const npt = this.compile_env_pos(meta.point_to);
@@ -372,7 +395,7 @@ export class RustCompiler {
             tmeta.imm_ref++;
           }
         } else {
-          if (res.tag !== "tempref")
+          if (res.tag !== "tref")
             throw new Error(`${comp.sym} not initialized correctly`);
           const { pos: ppos, meta: pmeta } = this.compile_env_pos(res.var);
           if (pmeta.mut_ref)

@@ -273,11 +273,13 @@ export class RustEvaluator extends BasicEvaluator {
     "<=": (x: any, y: any) => x <= y,
     ">=": (x: any, y: any) => x >= y,
     ">": (x: any, y: any) => x > y,
-    "===": (x: any, y: any) => x === y,
-    "!==": (x: any, y: any) => x !== y,
+    "==": (x: any, y: any) => x === y,
+    "!=": (x: any, y: any) => x !== y,
   };
 
-  apply_binop = (op: string, opr1: OS_prim, opr2: OS_prim): number => {
+  apply_binop = (op: string, opr2: OS_prim, opr1: OS_prim): number => {
+    console.log("opr1v: ", opr1.isaddr ? this.address_to_value(opr1.val as number) : opr1.val);
+    console.log("opr2v: ", opr2.isaddr ? this.address_to_value(opr2.val as number) : opr2.val);
     return this.binop_microcode[op](
       opr1.isaddr ? this.address_to_value(opr1.val as number) : opr1.val,
       opr2.isaddr ? this.address_to_value(opr2.val as number) : opr2.val
@@ -349,8 +351,8 @@ export class RustEvaluator extends BasicEvaluator {
         isfun: true,
       }),
     CALL: (instr: { tag: string; arity: number }) => {
-      let addr = this.stacktop - tmp_var_size;
       this.stack_push_frame(instr.arity);
+      let addr = this.stacktop;
       for (let i = instr.arity - 1; i >= 0; i--) {
         const arg = this.OS.pop();
         if (!arg.isaddr) {
@@ -364,7 +366,7 @@ export class RustEvaluator extends BasicEvaluator {
             this.stack_set_num(addr, arg.val as number);
           else throw new Error("Trying to bind unsupported type to argument");
         } else this.mem_copyw(arg.val as number, addr, tmp_var_size);
-        addr -= tmp_var_size;
+        addr += tmp_var_size;
       }
 
       this.RTS.push([this.PC, this.FDD, this.FRD]);
@@ -380,8 +382,8 @@ export class RustEvaluator extends BasicEvaluator {
       }
     },
     TAIL_CALL: (instr: { tag: string; arity: number }) => {
-      let addr = this.stacktop - tmp_var_size;
       this.stack_push_frame(instr.arity);
+      let addr = this.stacktop;
       for (let i = instr.arity - 1; i >= 0; i--) {
         const arg = this.OS.pop();
         if (!arg.isaddr) {
@@ -395,7 +397,7 @@ export class RustEvaluator extends BasicEvaluator {
             this.stack_set_num(addr, arg.val as number);
           else throw new Error("Trying to bind unsupported type to argument");
         } else this.mem_copyw(arg.val as number, addr, tmp_var_size);
-        addr -= tmp_var_size;
+        addr += tmp_var_size;
       }
 
       this.TCF++;
@@ -495,8 +497,7 @@ export class RustEvaluator extends BasicEvaluator {
       console.log("compiled: ", instrs);
 
       // // Execute compiled code
-      // const res = this.run(instrs);
-      const res = 0;
+      const res = this.run(instrs);
       // Send the result to the REPL
       this.conductor.sendOutput(`Result of expression: ${res}`);
     } catch (error) {
