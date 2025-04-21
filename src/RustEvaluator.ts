@@ -32,7 +32,6 @@ enum Tag {
   Unassigned = 3,
   Number = 4,
   Closure = 7,
-  Builtin = 10,
   String = 11,
 }
 
@@ -200,18 +199,6 @@ export class RustEvaluator extends BasicEvaluator {
       this.heap_get_string_index(addr)
     ].str;
 
-  // NOTE: Builtin Funcs
-  is_builtin = (addr: number) => this.mem_get_tag(addr) === Tag.Builtin;
-
-  heap_allocate_builtin = (id: number) => {
-    const addr = this.heap_allocate(Tag.Builtin, 1);
-    this.mem_setb_at_os(addr, word_layout.data_os, id);
-    return addr;
-  };
-
-  heap_get_builtin_id = (addr: number) =>
-    this.mem_getb_at_os(addr, word_layout.data_os);
-
   // NOTE: Closure Funcs
   is_closure = (addr: number) => this.mem_get_tag(addr) === Tag.Closure;
 
@@ -243,8 +230,6 @@ export class RustEvaluator extends BasicEvaluator {
       ? this.heap_get_string(addr)
       : this.is_closure(addr)
       ? "<closure>"
-      : this.is_builtin(addr)
-      ? "<builtin>"
       : "unknown word tag: " + this.word_to_string(addr);
 
   value_to_address = (x: any) =>
@@ -262,6 +247,12 @@ export class RustEvaluator extends BasicEvaluator {
     "-unary": (x: any) => -x,
     "!": (x: any) => !x,
   };
+
+  pointer_unop_microcode = {
+    "&": (addr: number) => addr,
+    "&mut": (addr: number) => addr,
+    "*unary": (addr: number) => this.address_to_value(addr)
+  }
 
   binop_microcode = {
     "+": (x: any, y: any) => x + y,
@@ -285,15 +276,19 @@ export class RustEvaluator extends BasicEvaluator {
       opr2.isaddr ? this.address_to_value(opr2.val as number) : opr2.val
     );
   };
-  apply_unop = (op: string, opr: OS_prim): number =>
-    this.unop_microcode[op](
+  apply_unop = (op: string, opr: OS_prim): number => {
+    if (this.pointer_unop_microcode[op]) {
+      return this.pointer_unop_microcode[op](opr.val);
+    } else return this.unop_microcode[op](
       opr.isaddr ? this.address_to_value(opr.val as number) : opr.val
     );
+  }
 
   microcode = {
     LDC: (instr: { tag: string; val: primitive }) =>
       this.OS.push({ isaddr: false, val: instr.val }),
     UNOP: (instr: { tag: string; sym: string }) =>
+      // when returning addresses isaddr remains false as no indirection is required
       this.OS.push({
         isaddr: false,
         val: this.apply_unop(instr.sym, this.OS.pop() as OS_prim),
@@ -325,6 +320,17 @@ export class RustEvaluator extends BasicEvaluator {
       console.log("og pos: ", instr.pos);
       console.log("Var pos: ", fi, vi);
       this.OS.push({ isaddr: true, val: this.stack_get(fi, vi) });
+    },
+    ASSIGN_DEREF: (instr: { tag: string }) => {
+      const opr = this.OS.pop();
+      const addr = this.OS.pop().val as number;
+      if ("isfun" in opr) {
+        this.stack_set_closure(addr, opr.val[0], opr.val[1], opr.val[2]);
+      } else if (val_is_bool(opr.val)) {
+        if (opr.val) this.stack_set_true(addr);
+        else this.stack_set_false(addr);
+      } else if (val_is_number(opr.val))
+        this.stack_set_num(addr, opr.val as number);
     },
     ASSIGN: (instr: { tag: string; pos: [number, number] }) => {
       let [fi, vi] = instr.pos;
