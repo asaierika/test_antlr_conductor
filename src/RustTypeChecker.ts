@@ -103,10 +103,10 @@ export class RustTypeChecker {
       tag: "cond",
       pred: this.annotate(comp.pred),
       cons: this.annotate(comp.cons),
-      alt: this.annotate(comp.alt),
+      alt: comp.alt ? this.annotate(comp.alt) : comp.alt,
     }),
     while: (comp) => ({
-      tag: "cond",
+      tag: "while",
       pred: this.annotate(comp.pred),
       body: this.annotate(comp.body),
     }),
@@ -560,7 +560,7 @@ export class RustTypeChecker {
   };
 
   type = (comp, te) => {
-    //console.log(comp.tag);
+    console.log("type: " + comp.tag);
     return this.type_comp[comp.tag](comp, te);
   };
 
@@ -611,6 +611,7 @@ export class RustTypeChecker {
   check = (program) => {
     try {
       const annotated = this.annotate(program);
+      console.log(JSON.stringify(annotated));
       this.type(annotated, this.global_type_environment);
     } catch (x) {
       throw x;
