@@ -39,7 +39,7 @@ const val_is_bool = (x: any) => typeof x === "boolean";
 const val_is_number = (x: any) => typeof x === "number";
 const val_is_string = (x: any) => typeof x === "string";
 
-type OS_prim = { isaddr: boolean; val: primitive };
+type OS_prim = { isaddr: boolean; val: primitive; is_ptr?: true };
 type OS_fun = { isaddr: boolean; val: [number, number, number]; isfun: true };
 type OS_t = OS_prim | OS_fun;
 
@@ -99,7 +99,7 @@ export class RustEvaluator extends BasicEvaluator {
   mem_get4b_at_os = (addr: number, offset: number) =>
     this.mem.getUint32(addr * word_size + offset);
   mem_copyw = (src: number, dest: number, size: number) => {
-    console.log("copying: ", src, dest, size);
+    // console.log("copying: ", src, dest, size);
     for (let i = 0; i < size; i++)
       this.mem_setw(dest + i, this.mem_get(src + i));
   };
@@ -124,7 +124,6 @@ export class RustEvaluator extends BasicEvaluator {
   };
 
   stack_set_num = (addr: number, v: number) => {
-    console.log("set num: ", addr * word_size, v);
     this.mem.setUint8(addr * word_size, Tag.Number);
     this.mem_set_child(addr, 0, v);
   };
@@ -251,8 +250,8 @@ export class RustEvaluator extends BasicEvaluator {
   pointer_unop_microcode = {
     "&": (addr: number) => addr,
     "&mut": (addr: number) => addr,
-    "*unary": (addr: number) => this.address_to_value(addr)
-  }
+    "*unary": (addr: number) => this.address_to_value(addr),
+  };
 
   binop_microcode = {
     "+": (x: any, y: any) => x + y,
@@ -269,30 +268,51 @@ export class RustEvaluator extends BasicEvaluator {
   };
 
   apply_binop = (op: string, opr2: OS_prim, opr1: OS_prim): number => {
-    console.log("opr1v: ", opr1.isaddr ? this.address_to_value(opr1.val as number) : opr1.val);
-    console.log("opr2v: ", opr2.isaddr ? this.address_to_value(opr2.val as number) : opr2.val);
+    // console.log(
+    //   "opr1v: ",
+    //   opr1.isaddr ? this.address_to_value(opr1.val as number) : opr1.val
+    // );
+    // console.log(
+    //   "opr2v: ",
+    //   opr2.isaddr ? this.address_to_value(opr2.val as number) : opr2.val
+    // );
     return this.binop_microcode[op](
-      opr1.isaddr ? this.address_to_value(opr1.val as number) : opr1.val,
-      opr2.isaddr ? this.address_to_value(opr2.val as number) : opr2.val
+      opr1.isaddr || opr1.is_ptr
+        ? this.address_to_value(opr1.val as number)
+        : opr1.val,
+      opr2.isaddr || opr2.is_ptr
+        ? this.address_to_value(opr2.val as number)
+        : opr2.val
     );
   };
-  apply_unop = (op: string, opr: OS_prim): number => {
+  apply_unop = (op: string, opr: OS_prim): [number, boolean] => {
     if (this.pointer_unop_microcode[op]) {
-      return this.pointer_unop_microcode[op](opr.val);
-    } else return this.unop_microcode[op](
-      opr.isaddr ? this.address_to_value(opr.val as number) : opr.val
-    );
-  }
+      return [this.pointer_unop_microcode[op](opr.val), true];
+    } else
+      return [
+        this.unop_microcode[op](
+          opr.isaddr || opr.is_ptr
+            ? this.address_to_value(opr.val as number)
+            : opr.val
+        ),
+        false,
+      ];
+  };
 
   microcode = {
     LDC: (instr: { tag: string; val: primitive }) =>
       this.OS.push({ isaddr: false, val: instr.val }),
-    UNOP: (instr: { tag: string; sym: string }) =>
+    UNOP: (instr: { tag: string; sym: string }) => {
       // when returning addresses isaddr remains false as no indirection is required
-      this.OS.push({
-        isaddr: false,
-        val: this.apply_unop(instr.sym, this.OS.pop() as OS_prim),
-      }),
+      const res = this.apply_unop(instr.sym, this.OS.pop() as OS_prim);
+      if (res[1])
+        this.OS.push({
+          isaddr: false,
+          val: res[0],
+          is_ptr: true,
+        });
+      else this.OS.push({ isaddr: false, val: res[0] });
+    },
     BINOP: (instr: { tag: string; sym: string }) =>
       this.OS.push({
         isaddr: false,
@@ -323,7 +343,7 @@ export class RustEvaluator extends BasicEvaluator {
     },
     ASSIGN_DEREF: (instr: { tag: string }) => {
       const opr = this.OS.pop();
-      const addr = this.OS.pop().val as number;
+      const addr = this.OS[this.OS.length - 1].val as number;
       if ("isfun" in opr) {
         this.stack_set_closure(addr, opr.val[0], opr.val[1], opr.val[2]);
       } else if (val_is_bool(opr.val)) {
@@ -335,12 +355,12 @@ export class RustEvaluator extends BasicEvaluator {
     ASSIGN: (instr: { tag: string; pos: [number, number] }) => {
       let [fi, vi] = instr.pos;
       if (this.FDD != -1 && fi >= this.FDD) fi += this.FRD - this.FDD;
-      console.log("FDD FRD: ", this.FDD, this.FRD);
-      console.log("og pos: ", instr.pos);
-      console.log("Var pos: ", fi, vi);
+      // console.log("FDD FRD: ", this.FDD, this.FRD);
+      // console.log("og pos: ", instr.pos);
+      // console.log("Var pos: ", fi, vi);
       const addr = this.stack_get(fi, vi);
-      console.log("Addr: ", addr);
-      const fopr = this.OS.pop();
+      // console.log("Addr: ", addr);
+      const fopr = this.OS[this.OS.length - 1];
       if ("isfun" in fopr) {
         this.stack_set_closure(addr, fopr.val[0], fopr.val[1], fopr.val[2]);
       } else if (val_is_bool(fopr.val)) {
@@ -424,12 +444,22 @@ export class RustEvaluator extends BasicEvaluator {
       this.FDD = call_frame[1];
       this.FRD = call_frame[2];
       for (let i = 0; i <= this.TCF; i++) this.stack_pop_frame();
+      this.TCF = 0;
     },
   };
 
   print_OS = (msg: string) => {
     console.log(msg);
-    for (let i = 0; i < this.OS.length; i++) console.log(this.OS[i]);
+    for (let i = 0; i < this.OS.length; i++) {
+      console.log(this.OS[i]);
+      if (this.OS[i].isaddr) {
+        const addr = this.OS[i].val as number;
+        if (this.is_boolean(addr)) console.log(this.is_true(addr));
+        else if (this.is_number(addr)) console.log(this.mem_get_child(addr, 0));
+        else if (this.is_closure(addr)) console.log(this.get_closure_arity(addr), this.get_closure_pc(addr), this.get_closure_denv(addr));
+        else console.log("Unknown type");
+      }
+    }
   };
 
   print_RTS = (msg: string) => {
@@ -449,17 +479,12 @@ export class RustEvaluator extends BasicEvaluator {
     this.PC = 0;
     this.free = 0;
     this.stacktop = mem_size / word_size;
-    console.log("stacktop: ", this.stacktop);
     this.FDD = -1;
     this.FRD = -1;
     this.stringPool = {};
     this.mem = mem_make(mem_size);
-    // console.log("allocated env");
-    //print_code()
+
     while (!(instrs[this.PC].tag === "DONE")) {
-      //heap_display()
-      //display(PC, "PC: ")
-      //display(instrs[PC].tag, "instr: ")
       //print_OS("\noperands:            ");
       //print_RTS("\nRTS:            ");
       console.log("PC: ", this.PC);
@@ -471,9 +496,7 @@ export class RustEvaluator extends BasicEvaluator {
       //display(instrs[PC].tag, "next instruction: ")
       this.microcode[instr.tag](instr);
     }
-    //display(OS, "\nfinal operands:           ")
-    //print_OS()
-    if (this.OS[0].isaddr)
+    if (this.OS[0].isaddr || "is_ptr" in this.OS[0])
       return this.address_to_value(this.OS[0].val as number);
     else return this.OS[0].val;
   }

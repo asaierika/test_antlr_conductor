@@ -103,7 +103,7 @@ export class RustCompiler {
   }
 
   compile = (comp: compile_comp) => {
-    console.log("compiling", comp);
+    // console.log("compiling", comp);
     return this.compile_comp[comp.tag](comp);
   }
 
@@ -256,7 +256,7 @@ export class RustCompiler {
       (comp: { expr: compile_comp; sym: {tag: "unop", sym: "*unary", frst: compile_comp} }) => {
         const res = this.compile(comp.sym) as { tag: 'tdref', var: string };
         const { pos, meta } = this.compile_env_pos(res.var);
-        console.log("assmt_deref", res.var, meta);
+        // console.log("assmt_deref", res.var, meta);
         if (meta.imm_ref || meta.mut_ref)
           throw new Error(
             `Cannot assign ${res.var} as it is already borrowed`
@@ -361,7 +361,7 @@ export class RustCompiler {
         this.blk_map.set(key, this.blk_map.get(key) + 1);
 
       const locals = this.scan_for_vars(comp.body);
-      this.print_vars("blk vars", locals);
+      // this.print_vars("blk vars", locals);
       this.instrs[this.wc++] = { tag: "ENTER_SCOPE", num: locals.length };
       this.compile_env.push(locals);
       this.compile(comp.body);
@@ -379,8 +379,9 @@ export class RustCompiler {
         this.blk_map.set(key, this.blk_map.get(key) - 1);
     },
     let: (comp: { expr: compile_comp; sym: string; type: string }) => {
-      const res = this.compile(comp.expr);
       const { pos, meta } = this.compile_env_pos(comp.sym);
+      meta.dec = true;
+      const res = this.compile(comp.expr);
       if (meta.point_to !== undefined) {
         if (comp.expr.tag === "nam") {
           const { pos: opos, meta: ometa } = this.compile_env_pos(
@@ -415,7 +416,6 @@ export class RustCompiler {
         tag: "ASSIGN",
         pos: this.compile_env_pos(comp.sym).pos,
       };
-      meta.dec = true;
     },
     ret: (comp: { expr: compile_comp }) => {
       this.compile(comp.expr);
@@ -429,7 +429,7 @@ export class RustCompiler {
       body: compile_comp;
       prms: { name: string; type: string }[];
     }) => {
-      console.log("fun comp", comp);
+      // console.log("fun comp", comp);
       this.compile({
         tag: "let",
         sym: comp.sym,
